@@ -41,10 +41,29 @@ bi/
 ├── groceries_long.csv                           # Dataset alternatif (format long)
 ├── SQL_Scripts.txt                              # Scripts SQL utiles
 ├── work.md                                      # Notes de travail / journal
-└── [schema_image]                               # Capture du schéma ER
+└── Images/                                     # Captures d'écran dashboards & pipeline
 ```
 
 ---
+
+## Captures d'écran
+
+### Dashboards Power BI
+
+Voici quelques captures d'écran des dashboards inclus dans le projet :
+
+- `Images/Capture d'écran 2026-06-03 020525.png` — Dashboard « Sales Performance »
+- `Images/Capture d'écran 2026-06-03 020535.png` — Dashboard « Product Performance »
+
+![Sales Performance Dashboard](Images/Capture%20d'écran%202026-06-03%20020525.png)
+
+![Product Performance Dashboard](Images/Capture%20d'écran%202026-06-03%20020535.png)
+
+### Pipeline Apache Hop
+
+Capture du pipeline Apache Hop utilisé pour charger les dimensions et préparer les données.
+
+![Pipeline Apache Hop](Images/Capture%20d'écran%202026-06-03%20012115.png)
 
 ## Schéma de la base de données
 
