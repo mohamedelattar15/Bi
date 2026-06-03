@@ -50,14 +50,17 @@ bi/
 
 ### Dashboards Power BI
 
-Voici quelques captures d'écran des dashboards inclus dans le projet :
+Voici les trois dashboards Power BI présents dans le projet :
 
-- `Images/Capture d'écran 2026-06-03 020525.png` — Dashboard « Sales Performance »
-- `Images/Capture d'écran 2026-06-03 020535.png` — Dashboard « Product Performance »
+- `Images/Capture d'écran 2026-06-03 020543.png` — Dashboard Customer Performance
+- `Images/Capture d'écran 2026-06-03 020549.png` — Dashboard Employee Performance
+- `Images/Capture d'écran 2026-06-03 020602.png` — Dashboard Basket Analysis
 
-![Sales Performance Dashboard](Images/Capture%20d'écran%202026-06-03%20020525.png)
+![Customer Performance Dashboard](Images/Capture%20d'écran%202026-06-03%20020543.png)
 
-![Product Performance Dashboard](Images/Capture%20d'écran%202026-06-03%20020535.png)
+![Employee Performance Dashboard](Images/Capture%20d'écran%202026-06-03%20020549.png)
+
+![Basket Analysis Dashboard](Images/Capture%20d'écran%202026-06-03%20020602.png)
 
 ### Pipeline Apache Hop
 
