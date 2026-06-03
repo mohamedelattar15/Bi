@@ -1,0 +1,33 @@
+# Fichiers système Windows
+.DS_Store
+Thumbs.db
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Fichiers temporaires
+*.tmp
+*~
+
+# Gros fichiers CSV et fichiers volumineux
+*.csv
+*.pbix
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Node (si applicable)
+node_modules/
+npm-debug.log
+
+# Base de données
+*.db
+*.sqlite

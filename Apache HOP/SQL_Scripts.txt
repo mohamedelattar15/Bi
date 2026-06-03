@@ -1,0 +1,84 @@
+-- ==========================================
+-- SUPPRIMER LES TABLES SI ELLES EXISTENT
+-- ==========================================
+DROP TABLE IF EXISTS fact_sales CASCADE;
+DROP TABLE IF EXISTS dim_product CASCADE;
+DROP TABLE IF EXISTS dim_customer CASCADE;
+DROP TABLE IF EXISTS dim_employee CASCADE;
+DROP TABLE IF EXISTS dim_category CASCADE;
+
+-- ==========================================
+-- 1. DIM_CATEGORY
+-- ==========================================
+CREATE TABLE dim_category (
+    categoryid INTEGER PRIMARY KEY,
+    categoryname VARCHAR(100)
+);
+
+-- ==========================================
+-- 2. DIM_PRODUCT
+-- ==========================================
+CREATE TABLE dim_product (
+    productid INTEGER PRIMARY KEY,
+    productname VARCHAR(200),
+    price NUMERIC(12,2),
+    categoryid INTEGER,
+    class VARCHAR(50),
+    modifydate DATE,
+    resistant VARCHAR(50),
+    isallergic VARCHAR(10),
+    vitalitydays NUMERIC(8,2),
+    categoryname VARCHAR(100)
+);
+
+-- ==========================================
+-- 3. DIM_CUSTOMER
+-- ==========================================
+CREATE TABLE dim_customer (
+    customerid INTEGER PRIMARY KEY,
+    customerfirstname VARCHAR(100),
+    middleinitial VARCHAR(1),
+    customerlastname VARCHAR(100),
+    address VARCHAR(200),
+    cityid INTEGER,
+    city VARCHAR(100),
+    zipcode VARCHAR(20),
+    countryid INTEGER,
+    country VARCHAR(100),
+    countrycode VARCHAR(2)
+);
+
+-- ==========================================
+-- 4. DIM_EMPLOYEE
+-- ==========================================
+CREATE TABLE dim_employee (
+    employeeid INTEGER PRIMARY KEY,
+    employeefirstname VARCHAR(100),
+    employeelastname VARCHAR(100),
+    birthdate DATE,
+    gender VARCHAR(20),
+    hiredate DATE,
+    city VARCHAR(100),
+    cityid INTEGER
+);
+
+-- ==========================================
+-- 5. FACT_SALES
+-- ==========================================
+CREATE TABLE fact_sales (
+    salesid BIGINT PRIMARY KEY,
+    employeeid INTEGER,
+    customerid INTEGER,
+    productid INTEGER,
+    date DATE,
+    quantity INTEGER,
+    discount NUMERIC(10,2),
+    totalprice NUMERIC(14,2),
+    transactionnumber VARCHAR(50),
+    time VARCHAR(10)
+);
+
+-- ==========================================
+-- VÉRIFICATION
+-- ==========================================
+\dt
