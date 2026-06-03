@@ -50,15 +50,21 @@ bi/
 
 ### Dashboards Power BI
 
-Voici les trois dashboards Power BI présents dans le projet :
+Voici les dashboards Power BI présents dans le projet :
 
-- `Images/Capture d'écran 2026-06-03 020543.png` — Dashboard Customer Performance
-- `Images/Capture d'écran 2026-06-03 020549.png` — Dashboard Employee Performance
+- `Images/Capture d'écran 2026-06-03 020525.png` — Dashboard Sales
+- `Images/Capture d'écran 2026-06-03 020535.png` — Dashboard Product
+- `Images/Capture d'écran 2026-06-03 020543.png` — Dashboard Customer
+- `Images/Capture d'écran 2026-06-03 020549.png` — Dashboard Employee
 - `Images/Capture d'écran 2026-06-03 020602.png` — Dashboard Basket Analysis
 
-![Customer Performance Dashboard](Images/Capture%20d'écran%202026-06-03%20020543.png)
+![Sales Dashboard](Images/Capture%20d'écran%202026-06-03%20020525.png)
 
-![Employee Performance Dashboard](Images/Capture%20d'écran%202026-06-03%20020549.png)
+![Product Dashboard](Images/Capture%20d'écran%202026-06-03%20020535.png)
+
+![Customer Dashboard](Images/Capture%20d'écran%202026-06-03%20020543.png)
+
+![Employee Dashboard](Images/Capture%20d'écran%202026-06-03%20020549.png)
 
 ![Basket Analysis Dashboard](Images/Capture%20d'écran%202026-06-03%20020602.png)
 
