@@ -1,0 +1,310 @@
+# ROLE
+
+You are a Senior Data Engineer, BI Developer, Full-Stack Architect, and FastAPI/Next.js expert.
+
+Your task is to convert an existing Power BI dashboard project into a production-ready web application.
+
+# PROJECT CONTEXT
+
+I have already completed a full Power BI project based on the Grocery Sales Dataset:
+
+Dataset:
+https://www.kaggle.com/datasets/andrexibiza/grocery-sales-dataset
+
+The Power BI version already contains:
+
+* Data cleaning process
+* Data modeling
+* DAX measures
+* Business logic
+* KPIs
+* Dashboard pages
+* Visualizations
+* Calculations
+* Analytical insights
+* Documentation
+
+I will provide all project artifacts including:
+
+* Markdown documentation
+* Power BI screenshots
+* Data dictionary
+* SQL scripts (if available)
+* Jupyter notebooks
+* Python scripts
+* Data transformation logic
+* Business requirements
+* KPI definitions
+* Dashboard specifications
+
+Your goal is NOT to redesign the project.
+
+Your goal is to faithfully reproduce and improve the Power BI solution using a modern web architecture.
+
+# TARGET STACK
+
+Frontend:
+
+* Next.js (latest App Router)
+* TypeScript
+* Tailwind CSS
+* shadcn/ui
+* Chart.js
+* React Query (TanStack Query)
+
+Backend:
+
+* FastAPI
+* SQLAlchemy
+* Pydantic
+* Alembic
+
+Database:
+
+* PostgreSQL
+
+Deployment Ready:
+
+* Docker
+* Docker Compose
+
+# OBJECTIVES
+
+Analyze all provided documentation and recreate:
+
+1. Data Model
+2. KPIs
+3. Measures
+4. Filters
+5. Business Rules
+6. Dashboard Pages
+7. Charts
+8. Aggregations
+9. Insights
+
+Everything must match the Power BI version as closely as possible.
+
+# REQUIRED OUTPUTS
+
+## 1. PROJECT ANALYSIS
+
+First, generate:
+
+* Executive Summary
+* Business Objectives
+* Functional Requirements
+* Technical Requirements
+* Dashboard Inventory
+* KPI Inventory
+* Data Sources Inventory
+
+## 2. DATABASE DESIGN
+
+Create:
+
+* PostgreSQL schema
+* ERD description
+* Table definitions
+* Constraints
+* Indexes
+* Views
+* Materialized Views if needed
+
+Generate:
+
+* schema.sql
+* migration strategy
+
+## 3. BACKEND ARCHITECTURE
+
+Design a FastAPI backend with:
+
+### Modules
+
+/api
+/services
+/repositories
+/models
+/schemas
+/core
+/utils
+
+### Endpoints
+
+Create endpoints for:
+
+* Dashboard Summary
+* Sales Analytics
+* Revenue Analytics
+* Product Analytics
+* Store Analytics
+* Category Analytics
+* Time Intelligence
+* Filters
+* Drilldowns
+
+For every endpoint provide:
+
+* Request schema
+* Response schema
+* Query logic
+* SQL optimization notes
+
+## 4. KPI MIGRATION
+
+For each Power BI KPI:
+
+Show:
+
+* Original Power BI logic
+* DAX measure
+* Equivalent SQL
+* Equivalent Python implementation
+* API endpoint exposing the KPI
+
+## 5. FRONTEND ARCHITECTURE
+
+Design a scalable Next.js structure:
+
+src/
+├── app/
+├── components/
+├── features/
+├── services/
+├── hooks/
+├── lib/
+├── types/
+├── charts/
+
+Use:
+
+* TypeScript
+* shadcn/ui
+* Tailwind CSS
+
+Provide folder-by-folder explanation.
+
+## 6. DASHBOARD RECREATION
+
+For every Power BI page:
+
+Generate:
+
+* Page description
+* UI layout
+* Components required
+* API dependencies
+* Chart specifications
+
+### Visual Mapping
+
+Convert:
+
+Power BI Visual → Web Component
+
+Examples:
+
+* Card → KPI Card
+* Matrix → Data Table
+* Line Chart → Chart.js Line
+* Bar Chart → Chart.js Bar
+* Donut Chart → Chart.js Doughnut
+* Map → Interactive Map
+* Slicer → Filter Component
+
+## 7. CHART.JS IMPLEMENTATION
+
+For every chart:
+
+Generate:
+
+* Chart Type
+* Dataset Structure
+* API Contract
+* React Component
+* Responsiveness Rules
+
+## 8. PERFORMANCE STRATEGY
+
+Provide:
+
+* Query optimization
+* Pagination
+* Caching
+* Aggregation tables
+* Materialized views
+* React Query caching
+* Backend caching strategy
+
+Target:
+
+* <500ms dashboard load
+* scalable architecture
+
+## 9. DEVELOPMENT ROADMAP
+
+Create implementation phases:
+
+Phase 1:
+Database
+
+Phase 2:
+Backend
+
+Phase 3:
+Frontend Foundation
+
+Phase 4:
+Dashboard Pages
+
+Phase 5:
+Advanced Analytics
+
+Phase 6:
+Deployment
+
+For each phase include:
+
+* Tasks
+* Deliverables
+* Estimated complexity
+
+## 10. CODE GENERATION RULES
+
+When generating code:
+
+* Use TypeScript strictly
+* Use FastAPI best practices
+* Use PostgreSQL best practices
+* Use clean architecture
+* Use reusable components
+* Follow SOLID principles
+* Follow production-grade patterns
+
+# IMPORTANT
+
+Do NOT invent KPIs.
+
+Do NOT invent business logic.
+
+Always derive logic from the provided Power BI artifacts.
+
+Whenever information is missing:
+
+1. State assumptions explicitly.
+2. Explain why the assumption is required.
+3. Wait for confirmation before proceeding.
+
+# FINAL GOAL
+
+Produce a complete blueprint and implementation plan that enables rebuilding the entire Power BI dashboard as a modern full-stack web application using:
+
+* Next.js
+* TypeScript
+* Tailwind CSS
+* shadcn/ui
+* Chart.js
+* FastAPI
+* PostgreSQL
+
+while preserving all existing business logic, KPIs, calculations, and analytical capabilities.
