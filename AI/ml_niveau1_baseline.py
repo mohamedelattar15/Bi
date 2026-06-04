@@ -20,8 +20,11 @@ import psycopg2
 
 # ─── CONFIG ──────────────────────────────────────────────────
 DB_CONFIG = {
-    "grocery_db": "grocery_db", "user": "postgres",
-    "password": "2002", "host": "localhost", "port": 5432,
+    "dbname": "grocery_db",
+    "user": "postgres",
+    "password": "2002",
+    "host": "localhost",
+    "port": 5432,
 }
 FIGSIZE = (14, 5)
 
