@@ -16,45 +16,13 @@ from statsmodels.tsa.statespace.sarimax import SARIMAX
 from statsmodels.tsa.holtwinters import ExponentialSmoothing
 from statsmodels.tsa.stattools import adfuller
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
-import psycopg2
+from data_loader import load_daily_revenue
 
-# ─── CONFIG ──────────────────────────────────────────────────
-DB_CONFIG = {
-    "dbname": "grocery_db",
-    "user": "postgres",
-    "password": "2002",
-    "host": "localhost",
-    "port": 5432,
-}
 FIGSIZE = (14, 5)
 
 # ═══════════════════════════════════════════════════════════════
 # 1. CHARGEMENT ET PRÉPARATION DES DONNÉES
 # ═══════════════════════════════════════════════════════════════
-
-def load_daily_revenue():
-    """Charge le revenue journalier depuis PostgreSQL."""
-    query = """
-        SELECT
-            f.date,
-            SUM((p.price * f.quantity) - f.discount) AS revenue
-        FROM fact_sales f
-        JOIN dim_product p USING (productid)
-        GROUP BY f.date
-        ORDER BY f.date
-    """
-    print("📥 Chargement des données depuis PostgreSQL...")
-    conn = psycopg2.connect(**DB_CONFIG)
-    df = pd.read_sql(query, conn, parse_dates=["date"])
-    conn.close()
-
-    df = df.set_index("date").asfreq("D")
-    df["revenue"] = df["revenue"].fillna(df["revenue"].median())
-    df["revenue"] = df["revenue"].astype(float)
-
-    print(f"   → {len(df):,} jours chargés ({df.index.min().date()} → {df.index.max().date()})")
-    return df
-
 
 def train_test_split(df):
     """Split : Train 2018-2021 / Test 2022."""

@@ -16,47 +16,12 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error
 from sklearn.preprocessing import StandardScaler
 import lightgbm as lgb
 import xgboost as xgb
-import psycopg2
+from data_loader import load_daily_enriched_data
 import joblib
-
-# ─── CONFIG ──────────────────────────────────────────────────
-DB_CONFIG = {
-    "grocery_db": "grocery_db", "user": "postgres",
-    "password": "2002", "host": "localhost", "port": 5432,
-}
 
 # ═══════════════════════════════════════════════════════════════
 # 1. CHARGEMENT
 # ═══════════════════════════════════════════════════════════════
-
-def load_daily_revenue():
-    query = """
-        SELECT
-            f.date,
-            SUM((p.price * f.quantity) - f.discount)  AS revenue,
-            COUNT(*)                                    AS nb_transactions,
-            SUM(f.quantity)                             AS total_qty,
-            AVG(f.discount)                             AS avg_discount,
-            COUNT(DISTINCT f.customerid)                AS nb_customers,
-            COUNT(DISTINCT f.productid)                 AS nb_products
-        FROM fact_sales f
-        JOIN dim_product p USING (productid)
-        GROUP BY f.date
-        ORDER BY f.date
-    """
-    print("📥 Chargement des données enrichies...")
-    conn = psycopg2.connect(**DB_CONFIG)
-    df = pd.read_sql(query, conn, parse_dates=["date"])
-    conn.close()
-
-    df = df.set_index("date").asfreq("D")
-    # Remplissage des jours manquants
-    for col in df.columns:
-        df[col] = df[col].fillna(df[col].median())
-
-    print(f"   → {len(df):,} jours | colonnes : {list(df.columns)}")
-    return df
-
 
 # ═══════════════════════════════════════════════════════════════
 # 2. FEATURE ENGINEERING
@@ -359,7 +324,7 @@ def main():
     print("║      NIVEAU 2 — ML CLASSIQUE : XGBoost + LightGBM       ║")
     print("╚══════════════════════════════════════════════════════════╝")
 
-    df = load_daily_revenue()
+    df = load_daily_enriched_data()
     df, feature_cols = create_features(df)
     X_train, y_train, X_test, y_test = prepare_sets(df, feature_cols)
 

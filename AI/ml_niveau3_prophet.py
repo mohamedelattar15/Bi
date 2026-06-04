@@ -15,39 +15,12 @@ import matplotlib.gridspec as gridspec
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 from prophet import Prophet
 from prophet.plot import plot_plotly, plot_components_plotly
-import psycopg2
+from data_loader import load_daily_revenue
 import joblib
-
-# ─── CONFIG ──────────────────────────────────────────────────
-DB_CONFIG = {
-    "grocery_db": "grocery_db", "user": "postgres",
-    "password": "2002", "host": "localhost", "port": 5432,
-}
 
 # ═══════════════════════════════════════════════════════════════
 # 1. CHARGEMENT
 # ═══════════════════════════════════════════════════════════════
-
-def load_daily_revenue():
-    query = """
-        SELECT
-            f.date,
-            SUM((p.price * f.quantity) - f.discount) AS revenue
-        FROM fact_sales f
-        JOIN dim_product p USING (productid)
-        GROUP BY f.date
-        ORDER BY f.date
-    """
-    print("📥 Chargement des données...")
-    conn = psycopg2.connect(**DB_CONFIG)
-    df = pd.read_sql(query, conn, parse_dates=["date"])
-    conn.close()
-
-    df = df.set_index("date").asfreq("D")
-    df["revenue"] = df["revenue"].fillna(df["revenue"].median()).astype(float)
-    print(f"   → {len(df):,} jours chargés")
-    return df
-
 
 # ═══════════════════════════════════════════════════════════════
 # 2. MÉTRIQUES
