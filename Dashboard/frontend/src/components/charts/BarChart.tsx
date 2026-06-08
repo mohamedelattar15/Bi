@@ -52,11 +52,7 @@ export function BarChart({
     labels,
     datasets: datasets.map((ds, i) => ({
       ...ds,
-      backgroundColor:
-        ds.backgroundColor ||
-        (Array.isArray(CHART_COLORS)
-          ? CHART_COLORS.slice(0, labels.length)
-          : CHART_COLORS[i % CHART_COLORS.length]),
+      backgroundColor: ds.backgroundColor || CHART_COLORS.slice(0, labels.length),
       borderColor: ds.borderColor || "transparent",
       borderRadius: 4,
     })),
@@ -75,7 +71,7 @@ export function BarChart({
         ? {
             display: true,
             text: title,
-            font: { size: 14, weight: "600" as const },
+            font: { size: 14, weight: 600 },
           }
         : undefined,
       tooltip: {

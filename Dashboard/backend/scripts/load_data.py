@@ -3,12 +3,12 @@ Script to load grocery sales CSV data into PostgreSQL.
 Uses the star schema: dim_category, dim_product, dim_customer, dim_employee, dim_date, fact_sales
 
 Usage:
-    python scripts/load_data.py
+    python scripts/load_data.py              # Load data (fails if tables have data)
+    python scripts/load_data.py --reset      # Drop all tables, re-run schema, then load data
 
 Prerequisites:
     - PostgreSQL running with 'grocery_sales' database
-    - schema.sql already executed
-    - CSV files in ../dataset/ directory
+    - CSV files in scripts/dataset/
 """
 
 import pandas as pd
@@ -19,7 +19,8 @@ from datetime import date, timedelta
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-DATASET_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "..", "dataset")
+# Dataset is in scripts/dataset/ alongside this script
+DATASET_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "dataset")
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
     "postgresql://postgres:postgres@localhost:5432/grocery_sales",
@@ -85,7 +86,7 @@ def load_dim_products(engine) -> None:
         "ProductName": "productname",
         "Price": "price",
         "CategoryID": "categoryid",
-        "Class": "class_",
+        "Class": "class",
         "ModifyDate": "modifydate",
         "Resistant": "resistant",
         "IsAllergic": "isallergic",
@@ -109,6 +110,10 @@ def load_dim_customers(engine) -> None:
     cities = pd.read_csv(os.path.join(DATASET_PATH, "cities.csv"))
     countries = pd.read_csv(os.path.join(DATASET_PATH, "countries.csv"))
 
+    # Join city and country info BEFORE renaming columns
+    df = df.merge(cities, on="CityID", how="left")
+    df = df.merge(countries, on="CountryID", how="left")
+
     df = df.rename(columns={
         "CustomerID": "customerid",
         "FirstName": "customerfirstname",
@@ -116,13 +121,8 @@ def load_dim_customers(engine) -> None:
         "LastName": "customerlastname",
         "CityID": "cityid",
         "Address": "address",
-    })
-
-    # Join city and country info
-    df = df.merge(cities, on="CityID", how="left")
-    df = df.merge(countries, on="CountryID", how="left")
-    df = df.rename(columns={
         "CityName": "city",
+        "CountryID": "countryid",
         "CountryName": "country",
         "CountryCode": "countrycode",
     })
@@ -186,13 +186,14 @@ def load_fact_sales(engine) -> None:
     df["SalesDate"] = pd.to_datetime(df["SalesDate"], errors="coerce")
     df = df.dropna(subset=["SalesDate"])
     df["date"] = df["SalesDate"].dt.date
-    df["time"] = df["SalesDate"].dt.time.astype(str)
+    df["time"] = df["SalesDate"].dt.strftime("%H:%M:%S")
 
     df = df[["salesid", "employeeid", "customerid", "productid", "date",
              "quantity", "discount", "totalprice", "transactionnumber", "time"]]
 
     # Insert in chunks for large dataset
-    chunksize = 50000
+    # Using smaller chunk size to avoid PostgreSQL parameter limit (max 65535 params)
+    chunksize = 5000
     for i in range(0, len(df), chunksize):
         chunk = df.iloc[i : i + chunksize]
         chunk.to_sql("fact_sales", engine, if_exists="append", index=False, method="multi")
@@ -219,7 +220,35 @@ def refresh_materialized_views(engine) -> None:
     print("  ✅ All materialized views refreshed")
 
 
+def reset_database(engine) -> None:
+    """Drop all data and re-run schema.sql to get a clean state."""
+    print("\n🔄 Resetting database...")
+    schema_path = os.path.join(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+        "..", "database", "schema.sql"
+    )
+    if not os.path.exists(schema_path):
+        # Try alternative path
+        schema_path = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+            "database", "schema.sql"
+        )
+    
+    print(f"  Using schema: {schema_path}")
+    with open(schema_path, "r") as f:
+        schema_sql = f.read()
+    
+    with engine.begin() as conn:
+        conn.execute(text(schema_sql))
+    print("  ✅ Database reset complete")
+
+
 def main():
+    import argparse
+    parser = argparse.ArgumentParser(description="Load grocery sales CSV data into PostgreSQL")
+    parser.add_argument("--reset", action="store_true", help="Drop all tables and re-run schema before loading")
+    args = parser.parse_args()
+
     print("=" * 60)
     print("  Grocery Sales Data Loader")
     print("=" * 60)
@@ -227,6 +256,9 @@ def main():
     engine = create_engine(DATABASE_URL)
 
     print(f"\n🔗 Connected to: {DATABASE_URL}")
+
+    if args.reset:
+        reset_database(engine)
 
     # Load in order
     load_dim_categories(engine)

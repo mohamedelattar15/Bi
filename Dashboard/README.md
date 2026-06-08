@@ -28,7 +28,7 @@ A modern full-stack web application rebuilt from a Power BI dashboard. Provides 
 
 ```bash
 cd docker
-docker-compose up -d
+docker compose up -d
 ```
 
 ### Access
@@ -151,8 +151,8 @@ uvicorn app.main:app --reload
 
 ```bash
 cd frontend
-npm install
-npm run dev
+bun install
+bun run dev
 ```
 
 ## 📋 Data Import

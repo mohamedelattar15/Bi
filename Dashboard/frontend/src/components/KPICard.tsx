@@ -2,6 +2,12 @@
 
 import { cn, formatCurrency, formatCompactNumber } from "@/lib/utils";
 import { TrendingUp, TrendingDown, Minus } from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 interface KPICardProps {
   label: string;
@@ -27,55 +33,49 @@ export function KPICard({
   className,
 }: KPICardProps) {
   const formattedValue = () => {
-    if (format === "currency") {
-      return formatCurrency(value);
-    }
-    if (format === "percentage") {
-      return `${value.toFixed(1)}%`;
-    }
+    if (format === "currency") return formatCurrency(value);
+    if (format === "percentage") return `${value.toFixed(1)}%`;
     return formatCompactNumber(value);
   };
 
-  const trendIcon = () => {
+  const TrendIcon = () => {
     if (trend_direction === "up")
       return <TrendingUp className="h-4 w-4 text-green-500" />;
     if (trend_direction === "down")
       return <TrendingDown className="h-4 w-4 text-red-500" />;
-    return <Minus className="h-4 w-4 text-gray-400" />;
-  };
-
-  const trendColor = () => {
-    if (trend_direction === "up") return "text-green-600";
-    if (trend_direction === "down") return "text-red-600";
-    return "text-gray-500";
+    return <Minus className="h-4 w-4 text-muted-foreground" />;
   };
 
   return (
-    <div
-      className={cn(
-        "rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition-all hover:shadow-md",
-        className
-      )}
-    >
-      <div className="flex items-center justify-between">
-        <span className="text-sm font-medium text-gray-500">{label}</span>
-        {icon && <div className="text-gray-400">{icon}</div>}
-      </div>
-      <div className="mt-2 flex items-baseline gap-2">
-        <span className="text-3xl font-bold text-gray-900">
+    <Card className={cn("transition-all hover:shadow-md", className)}>
+      <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <CardTitle className="text-sm font-medium text-muted-foreground">
+          {label}
+        </CardTitle>
+        {icon && <div className="text-muted-foreground">{icon}</div>}
+      </CardHeader>
+      <CardContent>
+        <div className="text-3xl font-bold text-foreground">
           {prefix}
           {formattedValue()}
           {suffix}
-        </span>
-      </div>
-      {trend !== null && trend !== undefined && (
-        <div className={cn("mt-2 flex items-center gap-1 text-sm", trendColor())}>
-          {trendIcon()}
-          <span>
-            {Math.abs(trend).toFixed(1)}% vs previous period
-          </span>
         </div>
-      )}
-    </div>
+        {trend !== null && trend !== undefined && (
+          <div className="mt-2 flex items-center gap-1 text-sm">
+            <TrendIcon />
+            <span
+              className={cn(
+                trend_direction === "up" && "text-green-600",
+                trend_direction === "down" && "text-red-600",
+                (!trend_direction || trend_direction === "stable") &&
+                  "text-muted-foreground"
+              )}
+            >
+              {Math.abs(trend).toFixed(1)}% vs previous period
+            </span>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }

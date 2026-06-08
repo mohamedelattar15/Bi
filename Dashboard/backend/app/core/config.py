@@ -33,7 +33,7 @@ class Settings(BaseSettings):
         )
 
     # CORS
-    CORS_ORIGINS: list[str] = ["http://localhost:3000"]
+    CORS_ORIGINS: list[str] = ["*"]
 
     # Cache
     CACHE_TTL_SECONDS: int = 300  # 5 minutes

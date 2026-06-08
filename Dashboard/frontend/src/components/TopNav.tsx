@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import { Bell, RefreshCw } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const pageTitles: Record<string, string> = {
   "/": "Sales Dashboard",
@@ -16,28 +17,30 @@ export function TopNav() {
   const title = pageTitles[pathname] || "Dashboard";
 
   return (
-    <header className="flex h-16 items-center justify-between border-b border-gray-200 bg-white px-6">
+    <header className="flex h-16 items-center justify-between border-b border-border bg-card px-6">
       <div>
-        <h1 className="text-xl font-semibold text-gray-900">{title}</h1>
-        <p className="text-sm text-gray-500">
+        <h1 className="text-xl font-semibold text-foreground">{title}</h1>
+        <p className="text-sm text-muted-foreground">
           Grocery Sales Analytics Dashboard
         </p>
       </div>
 
-      <div className="flex items-center gap-3">
-        <button
+      <div className="flex items-center gap-2">
+        <Button
+          variant="ghost"
+          size="icon"
           onClick={() => window.location.reload()}
-          className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
           title="Refresh"
         >
           <RefreshCw className="h-5 w-5" />
-        </button>
-        <button
-          className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
           title="Notifications"
         >
           <Bell className="h-5 w-5" />
-        </button>
+        </Button>
       </div>
     </header>
   );

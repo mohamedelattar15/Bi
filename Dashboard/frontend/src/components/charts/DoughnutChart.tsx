@@ -62,7 +62,7 @@ export function DoughnutChart({
         ? {
             display: true,
             text: title,
-            font: { size: 14, weight: "600" as const },
+            font: { size: 14, weight: 600 },
           }
         : undefined,
     },

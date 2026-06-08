@@ -12,6 +12,7 @@ from app.api import (
     employees,
     basket,
     filters,
+    insights,
 )
 
 app = FastAPI(
@@ -25,8 +26,7 @@ app = FastAPI(
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS,
-    allow_credentials=True,
+    allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -39,6 +39,7 @@ app.include_router(customers.router)
 app.include_router(employees.router)
 app.include_router(basket.router)
 app.include_router(filters.router)
+app.include_router(insights.router)
 
 
 @app.get("/api/health")

@@ -12,10 +12,11 @@ class DashboardRepository:
     def __init__(self, db: Session):
         self.db = db
 
+    _REVENUE_JOIN = "JOIN dim_product p ON s.productid = p.productid"
+
     def _apply_date_filter(self, base_query: str, params: dict, 
                            start_date: Optional[date] = None,
                            end_date: Optional[date] = None) -> str:
-        """Append date filter to query if dates provided."""
         if start_date:
             base_query += " AND s.date >= :start_date"
             params["start_date"] = start_date
@@ -24,41 +25,40 @@ class DashboardRepository:
             params["end_date"] = end_date
         return base_query
 
+    def _revenue(self) -> str:
+        """Use computed revenue since TotalPrice is 0 in source CSV."""
+        return "s.quantity * p.price"
+
     # ---- KPI QUERIES ----
 
-    def get_total_revenue(self, start_date: Optional[date] = None,
-                          end_date: Optional[date] = None) -> float:
-        query = "SELECT COALESCE(SUM(totalprice), 0) FROM fact_sales s WHERE 1=1"
+    def get_total_revenue(self, start_date=None, end_date=None) -> float:
+        query = f"SELECT COALESCE(SUM({self._revenue()}), 0) FROM fact_sales s {self._REVENUE_JOIN} WHERE 1=1"
         params = {}
         query = self._apply_date_filter(query, params, start_date, end_date)
         return self.db.execute(text(query), params).scalar()
 
-    def get_total_quantity(self, start_date: Optional[date] = None,
-                           end_date: Optional[date] = None) -> int:
+    def get_total_quantity(self, start_date=None, end_date=None) -> int:
         query = "SELECT COALESCE(SUM(quantity), 0) FROM fact_sales s WHERE 1=1"
         params = {}
         query = self._apply_date_filter(query, params, start_date, end_date)
         return self.db.execute(text(query), params).scalar()
 
-    def get_total_transactions(self, start_date: Optional[date] = None,
-                                end_date: Optional[date] = None) -> int:
-        query = """SELECT COUNT(DISTINCT transactionnumber) FROM fact_sales s WHERE 1=1"""
+    def get_total_transactions(self, start_date=None, end_date=None) -> int:
+        query = "SELECT COUNT(DISTINCT transactionnumber) FROM fact_sales s WHERE 1=1"
         params = {}
         query = self._apply_date_filter(query, params, start_date, end_date)
         return self.db.execute(text(query), params).scalar()
 
-    def get_avg_basket(self, start_date: Optional[date] = None,
-                       end_date: Optional[date] = None) -> float:
-        query = """
-            SELECT COALESCE(SUM(totalprice) / NULLIF(COUNT(DISTINCT transactionnumber), 0), 0)
-            FROM fact_sales s WHERE 1=1
+    def get_avg_basket(self, start_date=None, end_date=None) -> float:
+        query = f"""
+            SELECT COALESCE(SUM({self._revenue()}) / NULLIF(COUNT(DISTINCT transactionnumber), 0), 0)
+            FROM fact_sales s {self._REVENUE_JOIN} WHERE 1=1
         """
         params = {}
         query = self._apply_date_filter(query, params, start_date, end_date)
         return self.db.execute(text(query), params).scalar()
 
-    def get_unique_customers(self, start_date: Optional[date] = None,
-                              end_date: Optional[date] = None) -> int:
+    def get_unique_customers(self, start_date=None, end_date=None) -> int:
         query = "SELECT COUNT(DISTINCT customerid) FROM fact_sales s WHERE 1=1"
         params = {}
         query = self._apply_date_filter(query, params, start_date, end_date)
@@ -69,78 +69,54 @@ class DashboardRepository:
 
     # ---- TIME SERIES ----
 
-    def get_monthly_revenue(self, start_date: Optional[date] = None,
-                            end_date: Optional[date] = None) -> list[dict]:
-        query = """
-            SELECT 
-                d.year,
-                d.month,
-                d.month_name,
-                d.quarter,
-                SUM(s.totalprice) AS revenue,
-                SUM(s.quantity) AS quantity,
-                COUNT(DISTINCT s.transactionnumber) AS transaction_count,
-                SUM(s.totalprice) / NULLIF(COUNT(DISTINCT s.transactionnumber), 0) AS avg_basket
-            FROM fact_sales s
+    def get_monthly_revenue(self, start_date=None, end_date=None) -> list[dict]:
+        query = f"""
+            SELECT d.year, d.month, d.month_name, d.quarter,
+                   SUM({self._revenue()}) AS revenue,
+                   SUM(s.quantity) AS quantity,
+                   COUNT(DISTINCT s.transactionnumber) AS transaction_count,
+                   SUM({self._revenue()}) / NULLIF(COUNT(DISTINCT s.transactionnumber), 0) AS avg_basket
+            FROM fact_sales s {self._REVENUE_JOIN}
             JOIN dim_date d ON s.date = d.date_key
             WHERE 1=1
         """
         params = {}
         query = self._apply_date_filter(query, params, start_date, end_date)
-        query += """
-            GROUP BY d.year, d.month, d.month_name, d.quarter
-            ORDER BY d.year, d.month
-        """
+        query += " GROUP BY d.year, d.month, d.month_name, d.quarter ORDER BY d.year, d.month"
         result = self.db.execute(text(query), params)
         return [dict(row._mapping) for row in result]
 
     # ---- SALES BY CATEGORY ----
 
-    def get_sales_by_category(self, start_date: Optional[date] = None,
-                               end_date: Optional[date] = None) -> list[dict]:
-        query = """
-            SELECT 
-                p.categoryname AS category,
-                SUM(s.totalprice) AS revenue,
-                SUM(s.quantity) AS quantity,
-                COUNT(DISTINCT s.transactionnumber) AS transaction_count
-            FROM fact_sales s
-            JOIN dim_product p ON s.productid = p.productid
+    def get_sales_by_category(self, start_date=None, end_date=None) -> list[dict]:
+        query = f"""
+            SELECT p.categoryname AS category,
+                   SUM({self._revenue()}) AS revenue,
+                   SUM(s.quantity) AS quantity,
+                   COUNT(DISTINCT s.transactionnumber) AS transaction_count
+            FROM fact_sales s {self._REVENUE_JOIN}
             WHERE 1=1
         """
         params = {}
         query = self._apply_date_filter(query, params, start_date, end_date)
-        query += """
-            GROUP BY p.categoryname
-            ORDER BY revenue DESC
-        """
+        query += " GROUP BY p.categoryname ORDER BY revenue DESC"
         result = self.db.execute(text(query), params)
         return [dict(row._mapping) for row in result]
 
     # ---- TOP PRODUCTS ----
 
-    def get_top_products(self, limit: int = 10,
-                         start_date: Optional[date] = None,
-                         end_date: Optional[date] = None) -> list[dict]:
-        query = """
-            SELECT 
-                p.productid,
-                p.productname,
-                p.categoryname AS category,
-                SUM(s.totalprice) AS revenue,
-                SUM(s.quantity) AS quantity_sold,
-                COUNT(DISTINCT s.transactionnumber) AS times_sold
-            FROM fact_sales s
-            JOIN dim_product p ON s.productid = p.productid
+    def get_top_products(self, limit: int = 10, start_date=None, end_date=None) -> list[dict]:
+        query = f"""
+            SELECT p.productid, p.productname, p.categoryname AS category,
+                   SUM({self._revenue()}) AS revenue,
+                   SUM(s.quantity) AS quantity_sold,
+                   COUNT(DISTINCT s.transactionnumber) AS times_sold
+            FROM fact_sales s {self._REVENUE_JOIN}
             WHERE 1=1
         """
         params = {"limit": limit}
         query = self._apply_date_filter(query, params, start_date, end_date)
-        query += """
-            GROUP BY p.productid, p.productname, p.categoryname
-            ORDER BY revenue DESC
-            LIMIT :limit
-        """
+        query += " GROUP BY p.productid, p.productname, p.categoryname ORDER BY revenue DESC LIMIT :limit"
         result = self.db.execute(text(query), params)
         return [dict(row._mapping) for row in result]
 
@@ -148,19 +124,13 @@ class DashboardRepository:
 
     def get_product_detail(self, product_id: int) -> Optional[dict]:
         query = """
-            SELECT 
-                p.productid AS product_id,
-                p.productname AS product_name,
-                p.price,
-                p.categoryname AS category,
-                p.class AS class_,
-                p.resistant,
-                p.isallergic AS is_allergic,
-                p.vitalitydays AS vitality_days,
-                COALESCE(SUM(s.totalprice), 0) AS total_revenue,
-                COALESCE(SUM(s.quantity), 0) AS total_quantity,
-                COUNT(DISTINCT s.transactionnumber) AS times_sold,
-                COUNT(DISTINCT s.customerid) AS unique_customers
+            SELECT p.productid AS product_id, p.productname AS product_name,
+                   p.price, p.categoryname AS category, p.class AS class_,
+                   p.resistant, p.isallergic AS is_allergic, p.vitalitydays AS vitality_days,
+                   COALESCE(SUM(s.quantity * p.price), 0) AS total_revenue,
+                   COALESCE(SUM(s.quantity), 0) AS total_quantity,
+                   COUNT(DISTINCT s.transactionnumber) AS times_sold,
+                   COUNT(DISTINCT s.customerid) AS unique_customers
             FROM dim_product p
             LEFT JOIN fact_sales s ON p.productid = s.productid
             WHERE p.productid = :product_id
@@ -172,39 +142,28 @@ class DashboardRepository:
         return dict(row._mapping) if row else None
 
     def get_price_distribution(self) -> list[dict]:
-        query = """
-            SELECT 
-                CASE 
-                    WHEN price < 10 THEN '0-10€'
-                    WHEN price < 20 THEN '10-20€'
-                    WHEN price < 30 THEN '20-30€'
-                    WHEN price < 50 THEN '30-50€'
-                    WHEN price < 100 THEN '50-100€'
-                    ELSE '100€+'
-                END AS range_label,
-                MIN(price) AS min_price,
-                MAX(price) AS max_price,
-                COUNT(*) AS product_count,
-                COALESCE(SUM(s.totalprice), 0) AS total_revenue
-            FROM dim_product p
-            LEFT JOIN fact_sales s ON p.productid = s.productid
-            GROUP BY range_label
-            ORDER BY MIN(price)
+        query = f"""
+            SELECT CASE 
+                WHEN price < 10 THEN '0-10€' WHEN price < 20 THEN '10-20€'
+                WHEN price < 30 THEN '20-30€' WHEN price < 50 THEN '30-50€'
+                WHEN price < 100 THEN '50-100€' ELSE '100€+'
+            END AS range_label,
+            MIN(price) AS min_price, MAX(price) AS max_price,
+            COUNT(*) AS product_count,
+            COALESCE(SUM({self._revenue()}), 0) AS total_revenue
+            FROM dim_product p LEFT JOIN fact_sales s ON p.productid = s.productid
+            GROUP BY range_label ORDER BY MIN(price)
         """
         result = self.db.execute(text(query))
         return [dict(row._mapping) for row in result]
 
     def get_price_volume_matrix(self) -> list[dict]:
-        query = """
-            SELECT 
-                p.productid,
-                p.productname,
-                p.price,
-                COALESCE(SUM(s.quantity), 0) AS total_quantity,
-                COALESCE(SUM(s.totalprice), 0) AS total_revenue,
-                p.categoryname AS category
-            FROM dim_product p
-            LEFT JOIN fact_sales s ON p.productid = s.productid
+        query = f"""
+            SELECT p.productid, p.productname, p.price,
+                   COALESCE(SUM(s.quantity), 0) AS total_quantity,
+                   COALESCE(SUM({self._revenue()}), 0) AS total_revenue,
+                   p.categoryname AS category
+            FROM dim_product p LEFT JOIN fact_sales s ON p.productid = s.productid
             GROUP BY p.productid, p.productname, p.price, p.categoryname
             ORDER BY total_revenue DESC
         """
@@ -215,54 +174,38 @@ class DashboardRepository:
 
     def get_customer_segments(self) -> list[dict]:
         query = """
-            SELECT 
-                customer_segment AS segment,
-                COUNT(*) AS customer_count,
-                SUM(total_spent) AS total_revenue,
-                AVG(total_spent / NULLIF(purchase_frequency, 0)) AS avg_basket
+            SELECT customer_segment AS segment, COUNT(*) AS customer_count,
+                   SUM(total_spent) AS total_revenue,
+                   AVG(total_spent / NULLIF(purchase_frequency, 0)) AS avg_basket
             FROM mv_customer_segmentation
-            GROUP BY customer_segment
-            ORDER BY total_revenue DESC
+            GROUP BY customer_segment ORDER BY total_revenue DESC
         """
         result = self.db.execute(text(query))
         return [dict(row._mapping) for row in result]
 
     def get_top_customers(self, limit: int = 10) -> list[dict]:
         query = """
-            SELECT 
-                cs.customerid,
-                c.full_name,
-                c.city,
-                c.country,
-                cs.total_spent,
-                cs.purchase_frequency AS total_transactions,
-                cs.customer_segment AS segment
+            SELECT cs.customerid, c.full_name, c.city, c.country,
+                   cs.total_spent, cs.purchase_frequency AS total_transactions,
+                   cs.customer_segment AS segment
             FROM mv_customer_segmentation cs
             JOIN dim_customer c ON cs.customerid = c.customerid
-            ORDER BY cs.total_spent DESC
-            LIMIT :limit
+            ORDER BY cs.total_spent DESC LIMIT :limit
         """
         result = self.db.execute(text(query), {"limit": limit})
         return [dict(row._mapping) for row in result]
 
-    def get_customer_activity(self, start_date: Optional[date] = None,
-                               end_date: Optional[date] = None) -> list[dict]:
-        query = """
-            SELECT 
-                d.month_name AS month,
-                d.year,
-                COUNT(DISTINCT s.customerid) AS active_customers,
-                SUM(s.totalprice) AS total_revenue
-            FROM fact_sales s
-            JOIN dim_date d ON s.date = d.date_key
-            WHERE 1=1
+    def get_customer_activity(self, start_date=None, end_date=None) -> list[dict]:
+        query = f"""
+            SELECT d.month_name AS month, d.year,
+                   COUNT(DISTINCT s.customerid) AS active_customers,
+                   SUM({self._revenue()}) AS total_revenue
+            FROM fact_sales s {self._REVENUE_JOIN}
+            JOIN dim_date d ON s.date = d.date_key WHERE 1=1
         """
         params = {}
         query = self._apply_date_filter(query, params, start_date, end_date)
-        query += """
-            GROUP BY d.year, d.month, d.month_name
-            ORDER BY d.year, d.month
-        """
+        query += " GROUP BY d.year, d.month, d.month_name ORDER BY d.year, d.month"
         result = self.db.execute(text(query), params)
         return [dict(row._mapping) for row in result]
 
@@ -298,8 +241,7 @@ class DashboardRepository:
                 full_name,
                 total_revenue_generated AS total_revenue,
                 transactions_handled AS total_transactions,
-                gender,
-                age_group
+                gender
             FROM mv_employee_performance
             ORDER BY total_revenue DESC
             LIMIT :limit
@@ -310,20 +252,19 @@ class DashboardRepository:
     def get_employee_detail(self, employee_id: int) -> Optional[dict]:
         query = """
             SELECT 
-                employeeid AS employee_id,
-                full_name,
-                gender,
-                age_group,
-                seniority_group,
-                city,
-                total_revenue_generated AS total_revenue,
-                transactions_handled AS total_transactions,
-                total_quantity_sold AS total_quantity,
-                unique_customers_served AS unique_customers,
-                avg_transaction_value,
-                revenue_rank
-            FROM mv_employee_performance
-            WHERE employeeid = :employee_id
+                e.employeeid AS employee_id,
+                e.full_name,
+                e.gender,
+                e.city,
+                perf.total_revenue_generated AS total_revenue,
+                perf.transactions_handled AS total_transactions,
+                perf.total_quantity_sold AS total_quantity,
+                perf.unique_customers_served AS unique_customers,
+                perf.avg_transaction_value,
+                perf.revenue_rank
+            FROM mv_employee_performance perf
+            JOIN dim_employee e ON perf.employeeid = e.employeeid
+            WHERE e.employeeid = :employee_id
         """
         result = self.db.execute(text(query), {"employee_id": employee_id})
         row = result.first()
@@ -332,13 +273,18 @@ class DashboardRepository:
     def get_employee_performance_by_age(self) -> list[dict]:
         query = """
             SELECT 
-                age_group AS group_name,
-                COUNT(*) AS employee_count,
-                SUM(total_revenue_generated) AS total_revenue,
-                SUM(transactions_handled) AS total_transactions,
-                AVG(total_revenue_generated) AS avg_revenue_per_employee
-            FROM mv_employee_performance
-            GROUP BY age_group
+                CASE 
+                    WHEN EXTRACT(YEAR FROM age(CURRENT_DATE, e.birthdate)) < 30 THEN 'Young'
+                    WHEN EXTRACT(YEAR FROM age(CURRENT_DATE, e.birthdate)) BETWEEN 30 AND 45 THEN 'Middle'
+                    ELSE 'Senior'
+                END AS group_name,
+                COUNT(DISTINCT e.employeeid) AS employee_count,
+                SUM(perf.total_revenue_generated) AS total_revenue,
+                SUM(perf.transactions_handled) AS total_transactions,
+                AVG(perf.total_revenue_generated) AS avg_revenue_per_employee
+            FROM mv_employee_performance perf
+            JOIN dim_employee e ON perf.employeeid = e.employeeid
+            GROUP BY group_name
             ORDER BY total_revenue DESC
         """
         result = self.db.execute(text(query))
@@ -347,13 +293,18 @@ class DashboardRepository:
     def get_employee_performance_by_seniority(self) -> list[dict]:
         query = """
             SELECT 
-                seniority_group AS group_name,
-                COUNT(*) AS employee_count,
-                SUM(total_revenue_generated) AS total_revenue,
-                SUM(transactions_handled) AS total_transactions,
-                AVG(total_revenue_generated) AS avg_revenue_per_employee
-            FROM mv_employee_performance
-            GROUP BY seniority_group
+                CASE 
+                    WHEN EXTRACT(YEAR FROM age(CURRENT_DATE, e.hiredate)) < 1 THEN 'New'
+                    WHEN EXTRACT(YEAR FROM age(CURRENT_DATE, e.hiredate)) BETWEEN 1 AND 5 THEN 'Confirmed'
+                    ELSE 'Senior'
+                END AS group_name,
+                COUNT(DISTINCT e.employeeid) AS employee_count,
+                SUM(perf.total_revenue_generated) AS total_revenue,
+                SUM(perf.transactions_handled) AS total_transactions,
+                AVG(perf.total_revenue_generated) AS avg_revenue_per_employee
+            FROM mv_employee_performance perf
+            JOIN dim_employee e ON perf.employeeid = e.employeeid
+            GROUP BY group_name
             ORDER BY total_revenue DESC
         """
         result = self.db.execute(text(query))
@@ -364,11 +315,6 @@ class DashboardRepository:
     def get_basket_rules(self, min_support: float = 0.01,
                          min_lift: float = 1.5,
                          limit: int = 50) -> list[dict]:
-        """Get association rules from basket analysis.
-        
-        This computes product pairs by self-joining transactions.
-        For production with 6.7M rows, pre-compute in a materialized view.
-        """
         query = """
             WITH transaction_products AS (
                 SELECT DISTINCT s.transactionnumber, s.productid, p.productname
@@ -376,51 +322,217 @@ class DashboardRepository:
                 JOIN dim_product p ON s.productid = p.productid
             ),
             total_trans AS (
-                SELECT COUNT(DISTINCT transactionnumber) AS cnt 
-                FROM fact_sales
+                SELECT COUNT(DISTINCT transactionnumber) AS cnt FROM fact_sales
             ),
             product_pairs AS (
-                SELECT 
-                    a.productname AS product1,
-                    b.productname AS product2,
-                    COUNT(DISTINCT a.transactionnumber) AS both_count,
-                    COUNT(DISTINCT a.transactionnumber) OVER(
-                        PARTITION BY a.productname
-                    ) AS p1_count,
-                    COUNT(DISTINCT b.transactionnumber) OVER(
-                        PARTITION BY b.productname
-                    ) AS p2_count
+                SELECT a.productname AS product1, b.productname AS product2,
+                       COUNT(DISTINCT a.transactionnumber) AS both_count,
+                       COUNT(DISTINCT a.transactionnumber) OVER(PARTITION BY a.productname) AS p1_count,
+                       COUNT(DISTINCT b.transactionnumber) OVER(PARTITION BY b.productname) AS p2_count
                 FROM transaction_products a
-                JOIN transaction_products b 
-                    ON a.transactionnumber = b.transactionnumber
+                JOIN transaction_products b ON a.transactionnumber = b.transactionnumber
                     AND a.productname < b.productname
                 GROUP BY a.productname, b.productname
             )
-            SELECT 
-                pp.product1,
-                pp.product2,
-                pp.product1 || ' - ' || pp.product2 AS basket_label,
-                ROUND(pp.both_count::NUMERIC / tt.cnt, 6) AS support,
-                ROUND(pp.both_count::NUMERIC / NULLIF(pp.p1_count, 0), 6) AS confidence_p1,
-                ROUND(pp.both_count::NUMERIC / NULLIF(pp.p2_count, 0), 6) AS confidence_p2,
-                ROUND(
-                    (pp.both_count::NUMERIC / tt.cnt) / 
-                    NULLIF((pp.p1_count::NUMERIC / tt.cnt) * (pp.p2_count::NUMERIC / tt.cnt), 0), 
-                    6
-                ) AS lift
-            FROM product_pairs pp
-            CROSS JOIN total_trans tt
+            SELECT pp.product1, pp.product2,
+                   pp.product1 || ' - ' || pp.product2 AS basket_label,
+                   ROUND(pp.both_count::NUMERIC / tt.cnt, 6) AS support,
+                   ROUND(pp.both_count::NUMERIC / NULLIF(pp.p1_count, 0), 6) AS confidence_p1,
+                   ROUND(pp.both_count::NUMERIC / NULLIF(pp.p2_count, 0), 6) AS confidence_p2,
+                   ROUND((pp.both_count::NUMERIC / tt.cnt) / NULLIF((pp.p1_count::NUMERIC / tt.cnt) * (pp.p2_count::NUMERIC / tt.cnt), 0), 6) AS lift
+            FROM product_pairs pp CROSS JOIN total_trans tt
             WHERE (pp.both_count::NUMERIC / tt.cnt) >= :min_support
-            HAVING 
-                (pp.both_count::NUMERIC / tt.cnt) / 
-                NULLIF((pp.p1_count::NUMERIC / tt.cnt) * (pp.p2_count::NUMERIC / tt.cnt), 0) >= :min_lift
-            ORDER BY lift DESC
-            LIMIT :limit
+            HAVING (pp.both_count::NUMERIC / tt.cnt) / NULLIF((pp.p1_count::NUMERIC / tt.cnt) * (pp.p2_count::NUMERIC / tt.cnt), 0) >= :min_lift
+            ORDER BY lift DESC LIMIT :limit
         """
-        result = self.db.execute(
-            text(query),
-            {"min_support": min_support, "min_lift": min_lift, "limit": limit}
-        )
+        result = self.db.execute(text(query), {"min_support": min_support, "min_lift": min_lift, "limit": limit})
+        return [dict(row._mapping) for row in result]
+
+    # ====================================================================
+    # NEW: ADVANCED ANALYTICAL INSIGHTS
+    # ====================================================================
+
+    # ---- REVENUE CONCENTRATION ANALYSIS ----
+
+    def get_revenue_concentration(self) -> dict:
+        """Herfindahl index and concentration metrics."""
+        query = f"""
+            WITH cat_rev AS (
+                SELECT p.categoryname,
+                       SUM({self._revenue()}) AS revenue
+                FROM fact_sales s {self._REVENUE_JOIN}
+                GROUP BY p.categoryname
+            ), total AS (
+                SELECT SUM(revenue) AS grand_total FROM cat_rev
+            )
+            SELECT 
+                (SELECT COUNT(*) FROM cat_rev) AS category_count,
+                ROUND((SELECT MAX(revenue) / NULLIF(grand_total, 0) * 100 FROM cat_rev, total)::numeric, 2) AS top_category_pct,
+                (SELECT categoryname FROM cat_rev ORDER BY revenue DESC LIMIT 1) AS top_category,
+                ROUND((SELECT SUM(revenue * revenue) FROM cat_rev) / NULLIF((SELECT grand_total * grand_total FROM total), 0) * 10000::numeric, 2) AS herfindahl_index
+            FROM total
+        """
+        return dict(self.db.execute(text(query)).first()._mapping)
+
+    def get_revenue_by_day_of_week(self) -> list[dict]:
+        """Revenue and transaction breakdown by day of week."""
+        query = f"""
+            SELECT d.day_name, d.is_weekend,
+                   COUNT(DISTINCT s.transactionnumber) AS transactions,
+                   SUM(s.quantity) AS quantity,
+                   SUM({self._revenue()}) AS revenue,
+                   SUM({self._revenue()}) / NULLIF(COUNT(DISTINCT s.transactionnumber), 0) AS avg_basket
+            FROM fact_sales s {self._REVENUE_JOIN}
+            JOIN dim_date d ON s.date = d.date_key
+            GROUP BY d.day_name, d.is_weekend
+            ORDER BY revenue DESC
+        """
+        result = self.db.execute(text(query))
+        return [dict(row._mapping) for row in result]
+
+    def get_month_over_month_growth(self) -> list[dict]:
+        """Month-over-month growth rate with full-month comparisons."""
+        query = f"""
+            WITH monthly AS (
+                SELECT d.year, d.month, d.month_name,
+                       SUM({self._revenue()}) AS revenue,
+                       SUM(s.quantity) AS quantity,
+                       COUNT(DISTINCT s.transactionnumber) AS transactions
+                FROM fact_sales s {self._REVENUE_JOIN}
+                JOIN dim_date d ON s.date = d.date_key
+                GROUP BY d.year, d.month, d.month_name
+            )
+            SELECT curr.year, curr.month, curr.month_name,
+                   ROUND(curr.revenue::numeric, 2) AS revenue,
+                   ROUND(curr.quantity::numeric, 0) AS quantity,
+                   ROUND(COALESCE((curr.revenue - prev.revenue) / NULLIF(prev.revenue, 0) * 100, 0)::numeric, 2) AS mom_growth_pct,
+                   ROUND(curr.revenue::numeric / 3, 2) AS monthly_run_rate
+            FROM monthly curr
+            LEFT JOIN monthly prev ON curr.month = prev.month + 1
+                AND curr.year = prev.year
+                AND prev.month IS NOT NULL
+            ORDER BY curr.year, curr.month
+        """
+        result = self.db.execute(text(query))
+        return [dict(row._mapping) for row in result]
+
+    def get_sales_by_resistance(self) -> list[dict]:
+        """Revenue breakdown by product resistance level."""
+        query = f"""
+            SELECT p.resistant AS resistance,
+                   COUNT(DISTINCT p.productid) AS product_count,
+                   SUM(s.quantity) AS quantity,
+                   SUM({self._revenue()}) AS revenue
+            FROM dim_product p
+            LEFT JOIN fact_sales s ON p.productid = s.productid
+            GROUP BY p.resistant
+            ORDER BY revenue DESC
+        """
+        result = self.db.execute(text(query))
+        return [dict(row._mapping) for row in result]
+
+    # ---- CUSTOMER RFM SEGMENTATION ----
+
+    def get_customer_rfm_segmentation(self) -> list[dict]:
+        """Full RFM segmentation with recency, frequency, monetary."""
+        query = f"""
+            WITH rfm AS (
+                SELECT s.customerid,
+                       COUNT(DISTINCT s.transactionnumber) AS frequency,
+                       SUM({self._revenue()}) AS monetary,
+                       MAX(s.date) AS last_purchase_date,
+                       SUM(s.quantity) AS total_quantity,
+                       COUNT(DISTINCT p.categoryid) AS categories_bought
+                FROM fact_sales s {self._REVENUE_JOIN}
+                GROUP BY s.customerid
+            ),
+            stats AS (
+                SELECT 
+                    PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY frequency) AS f25,
+                    PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY frequency) AS f75,
+                    PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY monetary) AS m25,
+                    PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY monetary) AS m75
+                FROM rfm
+            )
+            SELECT 
+                CASE 
+                    WHEN r.monetary > s.m75 AND r.frequency > s.f75 THEN 'Champions'
+                    WHEN r.monetary > s.m75 AND r.frequency BETWEEN s.f25 AND s.f75 THEN 'Loyal'
+                    WHEN r.monetary > s.m75 THEN 'Big Spenders'
+                    WHEN r.frequency > s.f75 THEN 'Frequent Buyers'
+                    WHEN r.monetary > s.m25 THEN 'Average'
+                    ELSE 'At Risk'
+                END AS rfm_segment,
+                COUNT(*) AS customer_count,
+                ROUND(AVG(r.monetary)::numeric, 2) AS avg_spent,
+                ROUND(SUM(r.monetary)::numeric, 2) AS total_revenue,
+                ROUND(AVG(r.frequency)::numeric, 1) AS avg_frequency,
+                ROUND(AVG(r.categories_bought)::numeric, 1) AS avg_categories
+            FROM rfm r CROSS JOIN stats s
+            GROUP BY rfm_segment
+            ORDER BY total_revenue DESC
+        """
+        result = self.db.execute(text(query))
+        return [dict(row._mapping) for row in result]
+
+    def get_customer_geographic_distribution(self) -> list[dict]:
+        """Customer and revenue by country."""
+        query = f"""
+            SELECT c.country,
+                   COUNT(DISTINCT s.customerid) AS customer_count,
+                   SUM({self._revenue()}) AS total_revenue,
+                   SUM(s.quantity) AS total_quantity,
+                   SUM({self._revenue()}) / NULLIF(COUNT(DISTINCT s.customerid), 0) AS avg_revenue_per_customer
+            FROM fact_sales s {self._REVENUE_JOIN}
+            JOIN dim_customer c ON s.customerid = c.customerid
+            GROUP BY c.country
+            ORDER BY total_revenue DESC
+        """
+        result = self.db.execute(text(query))
+        return [dict(row._mapping) for row in result]
+
+    # ---- EMPLOYEE PERFORMANCE INSIGHTS ----
+
+    def get_employee_performance_parity(self) -> dict:
+        """How evenly distributed is employee performance."""
+        query = f"""
+            WITH emp_rev AS (
+                SELECT e.employeeid, e.full_name, e.gender,
+                       SUM({self._revenue()}) AS revenue,
+                       COUNT(DISTINCT s.transactionnumber) AS transactions,
+                       COUNT(DISTINCT s.customerid) AS customers_served
+                FROM fact_sales s {self._REVENUE_JOIN}
+                JOIN dim_employee e ON s.employeeid = e.employeeid
+                GROUP BY e.employeeid, e.full_name, e.gender
+            )
+            SELECT COUNT(*) AS employee_count,
+                   ROUND(AVG(revenue)::numeric, 2) AS avg_revenue,
+                   ROUND(STDDEV(revenue)::numeric, 2) AS stddev_revenue,
+                   ROUND((MAX(revenue) - MIN(revenue)) / NULLIF(AVG(revenue), 0) * 100::numeric, 2) AS spread_pct,
+                   ROUND(MIN(revenue)::numeric, 2) AS min_revenue,
+                   ROUND(MAX(revenue)::numeric, 2) AS max_revenue,
+                   ROUND(AVG(transactions)::numeric, 0) AS avg_transactions,
+                   ROUND(AVG(customers_served)::numeric, 0) AS avg_customers
+            FROM emp_rev
+        """
+        return dict(self.db.execute(text(query)).first()._mapping)
+
+    def get_employee_ranking(self) -> list[dict]:
+        """Full employee ranking with metrics."""
+        query = f"""
+            SELECT e.employeeid, e.full_name, e.gender,
+                   ROUND(SUM({self._revenue()})::numeric, 2) AS revenue,
+                   COUNT(DISTINCT s.transactionnumber) AS transactions,
+                   COUNT(DISTINCT s.customerid) AS customers_served,
+                   SUM(s.quantity) AS quantity_sold,
+                   ROUND(SUM({self._revenue()}) / NULLIF(COUNT(DISTINCT s.transactionnumber), 0)::numeric, 2) AS avg_transaction_value,
+                   RANK() OVER (ORDER BY SUM({self._revenue()}) DESC) AS rank
+            FROM fact_sales s {self._REVENUE_JOIN}
+            JOIN dim_employee e ON s.employeeid = e.employeeid
+            GROUP BY e.employeeid, e.full_name, e.gender
+            ORDER BY revenue DESC
+        """
+        result = self.db.execute(text(query))
         return [dict(row._mapping) for row in result]
 
     # ---- FILTERS ----
