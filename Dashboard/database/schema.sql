@@ -152,6 +152,8 @@
     -- ==========================================
 
     -- 7.1 Daily Sales Aggregation
+    -- Uses s.quantity * p.price (not s.totalprice) for defense-in-depth:
+    -- even if totalprice is somehow zero, the MV stays correct.
     CREATE MATERIALIZED VIEW mv_daily_sales AS
     SELECT 
         s.date,
@@ -173,10 +175,10 @@
         c.country,
         c.city,
         SUM(s.quantity) AS total_quantity,
-        SUM(s.totalprice) AS total_revenue,
+        SUM(s.quantity * p.price) AS total_revenue,
         COUNT(DISTINCT s.transactionnumber) AS transaction_count,
         COUNT(DISTINCT s.customerid) AS unique_customers,
-        AVG(s.totalprice / NULLIF(s.quantity, 0)) AS avg_unit_price,
+        AVG(p.price) AS avg_unit_price,
         SUM(s.discount) AS total_discount
     FROM fact_sales s
     JOIN dim_date d ON s.date = d.date_key
@@ -196,6 +198,7 @@
     CREATE INDEX idx_mv_daily_sales_country ON mv_daily_sales(country);
 
     -- 7.2 Monthly Aggregation
+    -- Uses s.quantity * p.price (not s.totalprice) for defense-in-depth.
     CREATE MATERIALIZED VIEW mv_monthly_sales AS
     SELECT 
         d.year,
@@ -212,10 +215,10 @@
         COUNT(DISTINCT s.customerid) AS unique_customers,
         COUNT(DISTINCT s.employeeid) AS active_employees,
         SUM(s.quantity) AS total_quantity,
-        SUM(s.totalprice) AS total_revenue,
-        AVG(s.totalprice / NULLIF(s.quantity, 0)) AS avg_unit_price,
+        SUM(s.quantity * p.price) AS total_revenue,
+        AVG(p.price) AS avg_unit_price,
         SUM(s.discount) AS total_discount,
-        SUM(s.totalprice) / NULLIF(COUNT(DISTINCT s.transactionnumber), 0) AS avg_basket_size
+        SUM(s.quantity * p.price) / NULLIF(COUNT(DISTINCT s.transactionnumber), 0) AS avg_basket_size
     FROM fact_sales s
     JOIN dim_date d ON s.date = d.date_key
     JOIN dim_product p ON s.productid = p.productid
@@ -281,10 +284,10 @@
         p.class,
         COUNT(DISTINCT s.transactionnumber) AS times_sold,
         SUM(s.quantity) AS total_quantity_sold,
-        SUM(s.totalprice) AS total_revenue,
+        SUM(s.quantity * p.price) AS total_revenue,
         COUNT(DISTINCT s.customerid) AS unique_customers,
         AVG(s.quantity) AS avg_quantity_per_sale,
-        RANK() OVER (ORDER BY SUM(s.totalprice) DESC) AS revenue_rank,
+        RANK() OVER (ORDER BY SUM(s.quantity * p.price) DESC) AS revenue_rank,
         RANK() OVER (ORDER BY SUM(s.quantity) DESC) AS volume_rank
     FROM fact_sales s
     JOIN dim_product p ON s.productid = p.productid
@@ -294,6 +297,7 @@
     CREATE INDEX idx_mv_top_products_category ON mv_top_products(categoryname);
 
     -- 7.5 Employee Performance View
+    -- Joins dim_product for revenue computation (quantity*price, not totalprice)
     CREATE MATERIALIZED VIEW mv_employee_performance AS
     SELECT 
         e.employeeid,
@@ -301,13 +305,14 @@
         e.gender,
         e.city,
         COUNT(DISTINCT s.transactionnumber) AS transactions_handled,
-        SUM(s.totalprice) AS total_revenue_generated,
+        SUM(s.quantity * p.price) AS total_revenue_generated,
         SUM(s.quantity) AS total_quantity_sold,
         COUNT(DISTINCT s.customerid) AS unique_customers_served,
-        AVG(s.totalprice) AS avg_transaction_value,
-        RANK() OVER (ORDER BY SUM(s.totalprice) DESC) AS revenue_rank
+        SUM(s.quantity * p.price) / NULLIF(COUNT(DISTINCT s.transactionnumber), 0) AS avg_transaction_value,
+        RANK() OVER (ORDER BY SUM(s.quantity * p.price) DESC) AS revenue_rank
     FROM fact_sales s
     JOIN dim_employee e ON s.employeeid = e.employeeid
+    JOIN dim_product p ON s.productid = p.productid
     GROUP BY e.employeeid, e.full_name, e.gender, e.city;
 
     CREATE UNIQUE INDEX idx_mv_employee_perf ON mv_employee_performance(employeeid);

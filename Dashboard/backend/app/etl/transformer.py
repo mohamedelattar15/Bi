@@ -151,13 +151,19 @@ def generate_dim_date(sales_df: pd.DataFrame) -> pd.DataFrame:
 # 5. FACT TABLE TRANSFORMATIONS
 # ──────────────────────────────────────────────
 
-def prepare_fact_sales(sales: pd.DataFrame) -> pd.DataFrame:
+def prepare_fact_sales(sales: pd.DataFrame,
+                       products: pd.DataFrame | None = None) -> pd.DataFrame:
     """
     Prepare fact_sales DataFrame with standardized columns.
+
+    CRITICAL: Pre-computes totalprice = quantity * price since the source
+    CSV has TotalPrice=0 for all rows. This eliminates the need for
+    JOIN dim_product on every dashboard query.
 
     Transformations:
     - Rename columns to snake_case
     - Parse and clean dates
+    - Compute totalprice from quantity * price
     - Select final column set
     """
     df = sales.rename(columns={
@@ -172,6 +178,22 @@ def prepare_fact_sales(sales: pd.DataFrame) -> pd.DataFrame:
     })
 
     df = clean_sales_dates(df, "SalesDate")
+
+    # ── Pre-compute totalprice ──
+    # Source CSV has TotalPrice=0 for all 6.7M rows.
+    # We compute quantity * price here so all downstream queries
+    # (dashboard, MVs, reports) can use totalprice directly without
+    # expensive JOINs to dim_product.
+    if products is not None:
+        # Build a productid -> price lookup
+        prod_prices = products[["ProductID", "Price"]].copy()
+        prod_prices.columns = ["productid", "price"]
+        df = df.merge(prod_prices, on="productid", how="left")
+        df["totalprice"] = df["quantity"] * df["price"].fillna(0)
+        df = df.drop(columns=["price"])
+        print(f"  ✅ Pre-computed totalprice for {len(df):,} fact rows")
+    else:
+        print("  ⚠️  No products data provided — totalprice may be incorrect")
 
     return df[["salesid", "employeeid", "customerid", "productid",
                "date", "quantity", "discount", "totalprice",
@@ -214,6 +236,8 @@ def prepare_dim_customers(customers: pd.DataFrame,
                           countries: pd.DataFrame) -> pd.DataFrame:
     """Standardize and enrich customers for dim_customer load."""
     df = enrich_customers(customers, cities, countries)
+    # ── Rename columns to snake_case ──
+    # Note: rename BEFORE accessing columns to avoid KeyError
     df = df.rename(columns={
         "CustomerID": "customerid",
         "FirstName": "customerfirstname",
@@ -227,13 +251,12 @@ def prepare_dim_customers(customers: pd.DataFrame,
         "CountryName": "country",
         "CountryCode": "countrycode",
     })
-    df["zipcode"] = df["Zipcode"].astype(str)
 
-    # Fix renamed columns from merge
-    if "CountryID" in df.columns:
-        df = df.rename(columns={"CountryID": "countryid"})
-    if "CityID" in df.columns:
-        df = df.rename(columns={"CityID": "cityid"})
+    # ── Type coercion (use renamed column names) ──
+    if "zipcode" in df.columns:
+        df["zipcode"] = df["zipcode"].astype(str)
+    else:
+        df["zipcode"] = ""
 
     return df[["customerid", "customerfirstname", "middleinitial",
                "customerlastname", "address", "cityid", "city",

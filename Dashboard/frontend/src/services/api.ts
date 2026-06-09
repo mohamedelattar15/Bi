@@ -47,14 +47,25 @@ export interface DashboardParams {
   end_date?: string;
 }
 
+export interface ChartFilterParams extends DashboardParams {
+  category?: string;
+  product?: string;
+}
+
+function buildSearchParams(params?: DashboardParams | ChartFilterParams): string {
+  if (!params) return "";
+  const sp = new URLSearchParams();
+  if ("start_date" in params && params.start_date) sp.set("start_date", params.start_date);
+  if ("end_date" in params && params.end_date) sp.set("end_date", params.end_date);
+  if ("category" in params && (params as ChartFilterParams).category) sp.set("category", (params as ChartFilterParams).category!);
+  if ("product" in params && (params as ChartFilterParams).product) sp.set("product", (params as ChartFilterParams).product!);
+  const qs = sp.toString();
+  return qs ? `?${qs}` : "";
+}
+
 export const dashboardApi = {
-  getSummary: (params?: DashboardParams) => {
-    const searchParams = new URLSearchParams();
-    if (params?.start_date) searchParams.set("start_date", params.start_date);
-    if (params?.end_date) searchParams.set("end_date", params.end_date);
-    const query = searchParams.toString();
-    return fetchApi<any>(`/api/dashboard/summary${query ? `?${query}` : ""}`);
-  },
+  getSummary: (params?: DashboardParams) =>
+    fetchApi<any>(`/api/dashboard/summary${buildSearchParams(params)}`),
 };
 
 // ==========================================
@@ -62,33 +73,12 @@ export const dashboardApi = {
 // ==========================================
 
 export const salesApi = {
-  getOverTime: (params?: DashboardParams) => {
-    const searchParams = new URLSearchParams();
-    if (params?.start_date) searchParams.set("start_date", params.start_date);
-    if (params?.end_date) searchParams.set("end_date", params.end_date);
-    const query = searchParams.toString();
-    return fetchApi<any[]>(
-      `/api/sales/over-time${query ? `?${query}` : ""}`
-    );
-  },
-  getByCategory: (params?: DashboardParams) => {
-    const searchParams = new URLSearchParams();
-    if (params?.start_date) searchParams.set("start_date", params.start_date);
-    if (params?.end_date) searchParams.set("end_date", params.end_date);
-    const query = searchParams.toString();
-    return fetchApi<any[]>(
-      `/api/sales/by-category${query ? `?${query}` : ""}`
-    );
-  },
-  getMonthly: (params?: DashboardParams) => {
-    const searchParams = new URLSearchParams();
-    if (params?.start_date) searchParams.set("start_date", params.start_date);
-    if (params?.end_date) searchParams.set("end_date", params.end_date);
-    const query = searchParams.toString();
-    return fetchApi<any[]>(
-      `/api/sales/monthly${query ? `?${query}` : ""}`
-    );
-  },
+  getOverTime: (params?: ChartFilterParams) =>
+    fetchApi<any[]>(`/api/sales/over-time${buildSearchParams(params)}`),
+  getByCategory: (params?: ChartFilterParams) =>
+    fetchApi<any[]>(`/api/sales/by-category${buildSearchParams(params)}`),
+  getMonthly: (params?: ChartFilterParams) =>
+    fetchApi<any[]>(`/api/sales/monthly${buildSearchParams(params)}`),
 };
 
 // ==========================================

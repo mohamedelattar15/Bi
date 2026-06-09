@@ -39,7 +39,7 @@ class BasketService:
         ]
 
         total_transactions = int(
-            self.repo.get_total_transactions()
+            self.repo.get_all_kpis()["total_transactions"]
         )
 
         return BasketAnalysisResult(

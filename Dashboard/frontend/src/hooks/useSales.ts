@@ -1,9 +1,9 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { salesApi, type DashboardParams } from "@/services/api";
+import { salesApi, type ChartFilterParams } from "@/services/api";
 
-export function useSalesOverTime(params?: DashboardParams) {
+export function useSalesOverTime(params?: ChartFilterParams) {
   return useQuery({
     queryKey: ["sales", "over-time", params],
     queryFn: () => salesApi.getOverTime(params),
@@ -11,7 +11,7 @@ export function useSalesOverTime(params?: DashboardParams) {
   });
 }
 
-export function useSalesByCategory(params?: DashboardParams) {
+export function useSalesByCategory(params?: ChartFilterParams) {
   return useQuery({
     queryKey: ["sales", "by-category", params],
     queryFn: () => salesApi.getByCategory(params),
@@ -19,7 +19,7 @@ export function useSalesByCategory(params?: DashboardParams) {
   });
 }
 
-export function useMonthlySales(params?: DashboardParams) {
+export function useMonthlySales(params?: ChartFilterParams) {
   return useQuery({
     queryKey: ["sales", "monthly", params],
     queryFn: () => salesApi.getMonthly(params),

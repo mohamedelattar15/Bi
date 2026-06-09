@@ -3,19 +3,16 @@ ETL — Load Module
 
 Handles inserting transformed DataFrames into PostgreSQL tables.
 Respects foreign key order: dimensions first, then facts.
+Uses COPY for large tables (>100K rows) — dramatically faster than multi-row INSERT.
 """
 
+import io
 import pandas as pd
 from sqlalchemy import Engine, text
 from sqlalchemy.orm import Session
 
-# Maximum parameters per PostgreSQL statement (safety margin)
-MAX_PARAMS = 60000
-
-
-def _chunk_size(num_columns: int) -> int:
-    """Calculate safe chunk size based on column count."""
-    return min(5000, MAX_PARAMS // num_columns)
+# Threshold: use COPY for tables bigger than this
+COPY_THRESHOLD = 100_000
 
 
 def load_dataframe(df: pd.DataFrame, table: str, engine: Engine,
@@ -23,11 +20,14 @@ def load_dataframe(df: pd.DataFrame, table: str, engine: Engine,
     """
     Load a DataFrame into a PostgreSQL table.
 
+    Uses COPY for large tables (>100K rows), multi-row INSERT for small ones.
+    COPY is ~10-50x faster for bulk loading.
+
     Args:
         df: DataFrame to insert
         table: Target table name
         engine: SQLAlchemy engine
-        chunksize: Rows per INSERT chunk (auto-calculated if None)
+        chunksize: Ignored for COPY, used only for INSERT fallback
 
     Returns:
         Number of rows inserted
@@ -36,18 +36,42 @@ def load_dataframe(df: pd.DataFrame, table: str, engine: Engine,
         print(f"  ⚠️  No data to insert into {table}")
         return 0
 
-    if chunksize is None:
-        chunksize = _chunk_size(len(df.columns))
+    if len(df) > COPY_THRESHOLD:
+        _copy_from_buffer(df, table, engine)
+    else:
+        # Fallback to multi-row INSERT for small tables
+        df.to_sql(
+            table,
+            engine,
+            if_exists="append",
+            index=False,
+            method="multi",
+            chunksize=chunksize or 5000,
+        )
 
-    df.to_sql(
-        table,
-        engine,
-        if_exists="append",
-        index=False,
-        method="multi",
-        chunksize=chunksize,
-    )
     return len(df)
+
+
+def _copy_from_buffer(df: pd.DataFrame, table: str, engine: Engine) -> None:
+    """
+    Bulk-load a DataFrame using PostgreSQL COPY.
+    Writes the DataFrame to an in-memory CSV buffer and pipes it via COPY.
+    """
+    buffer = io.StringIO()
+    df.to_csv(buffer, index=False, header=False, sep="\t", na_rep="\\N")
+    buffer.seek(0)
+
+    conn = engine.raw_connection()
+    try:
+        with conn.cursor() as cursor:
+            cursor.copy_from(buffer, table, sep="\t", null="\\N")
+        conn.commit()
+        print(f"  📦 Bulk-loaded {len(df):,} rows into {table} via COPY")
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
 
 
 def refresh_materialized_views(engine: Engine) -> None:

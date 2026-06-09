@@ -10,6 +10,7 @@ from app.schemas.dashboard import (
     DashboardSummary, KPICard, SalesOverTime, 
     SalesByCategory, SalesByMonth, TopProduct
 )
+from app.utils.cache import cached
 
 
 class DashboardService:
@@ -18,20 +19,27 @@ class DashboardService:
     def __init__(self, db: Session):
         self.repo = DashboardRepository(db)
 
+    @cached()
     def get_dashboard_summary(
         self,
         start_date: Optional[date] = None,
         end_date: Optional[date] = None
     ) -> DashboardSummary:
-        """Build complete dashboard summary with KPIs and chart data."""
+        """Build complete dashboard summary with KPIs and chart data.
+        
+        Cached for CACHE_TTL_SECONDS (default 5 min, set via .env).
+        Cache key includes start_date/end_date so different filters
+        are cached independently.
+        """
 
-        # --- KPIs ---
-        revenue = Decimal(str(self.repo.get_total_revenue(start_date, end_date)))
-        quantity = int(self.repo.get_total_quantity(start_date, end_date))
-        transactions = int(self.repo.get_total_transactions(start_date, end_date))
-        avg_basket = Decimal(str(self.repo.get_avg_basket(start_date, end_date)))
-        customers = int(self.repo.get_unique_customers(start_date, end_date))
-        total_products = int(self.repo.get_total_products())
+        # --- KPIs (single combined query vs 6 individual queries) ---
+        kpis = self.repo.get_all_kpis(start_date, end_date)
+        revenue = Decimal(str(kpis["total_revenue"]))
+        quantity = int(kpis["total_quantity"])
+        transactions = int(kpis["total_transactions"])
+        avg_basket = Decimal(str(kpis["avg_basket"]))
+        customers = int(kpis["unique_customers"])
+        total_products = int(kpis["total_products"])
 
         # --- Time Series ---
         monthly_data = self.repo.get_monthly_revenue(start_date, end_date)

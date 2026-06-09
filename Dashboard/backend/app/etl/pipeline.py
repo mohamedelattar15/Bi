@@ -196,7 +196,8 @@ class ETLPipeline:
 
     def _load_facts(self, datasets: dict) -> None:
         """Load fact_sales table."""
-        df = prepare_fact_sales(datasets["sales"])
+        # Pass products for totalprice pre-computation (critical perf fix)
+        df = prepare_fact_sales(datasets["sales"], datasets["products"])
         self.metrics["fact_sales"] = load_dataframe(df, "fact_sales", self.engine)
         print(f"  ✅ fact_sales: {self.metrics['fact_sales']:,} rows")
 

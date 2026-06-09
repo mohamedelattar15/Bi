@@ -1,22 +1,16 @@
 import type { Metadata } from "next";
-import { Inter, Merriweather, JetBrains_Mono } from "next/font/google";
+import { Oxanium, Source_Code_Pro } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 import { Sidebar } from "@/components/Sidebar";
 import { TopNav } from "@/components/TopNav";
 
-const fontSans = Inter({
+const fontSans = Oxanium({
   subsets: ["latin"],
   variable: "--font-sans",
 });
 
-const fontSerif = Merriweather({
-  weight: ["400", "700"],
-  subsets: ["latin"],
-  variable: "--font-serif",
-});
-
-const fontMono = JetBrains_Mono({
+const fontMono = Source_Code_Pro({
   subsets: ["latin"],
   variable: "--font-mono",
 });
@@ -32,8 +26,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${fontSans.variable} ${fontSerif.variable} ${fontMono.variable} antialiased`}>
+    <html lang="en" className="dark">
+      <body className={`${fontSans.variable} ${fontMono.variable} antialiased`}>
         <Providers>
           <div className="flex h-screen overflow-hidden">
             <Sidebar />

@@ -16,11 +16,12 @@ router = APIRouter(prefix="/api/sales", tags=["Sales"])
 def get_sales_over_time(
     start_date: Optional[date] = Query(None),
     end_date: Optional[date] = Query(None),
+    category: Optional[str] = Query(None, description="Filter by product category"),
     db: Session = Depends(get_db),
 ):
     """Get revenue over time (monthly)."""
     repo = DashboardRepository(db)
-    data = repo.get_monthly_revenue(start_date, end_date)
+    data = repo.get_monthly_revenue(start_date, end_date, category=category)
     return [
         SalesOverTime(
             date=f"{row['year']}-{row['month']:02d}-01",
@@ -38,11 +39,12 @@ def get_sales_over_time(
 def get_sales_by_category(
     start_date: Optional[date] = Query(None),
     end_date: Optional[date] = Query(None),
+    product: Optional[str] = Query(None, description="Filter by product name"),
     db: Session = Depends(get_db),
 ):
     """Get sales aggregated by product category."""
     repo = DashboardRepository(db)
-    data = repo.get_sales_by_category(start_date, end_date)
+    data = repo.get_sales_by_category(start_date, end_date, product=product)
     total = sum(r['revenue'] for r in data) or 1
     return [
         SalesByCategory(
@@ -60,11 +62,12 @@ def get_sales_by_category(
 def get_monthly_sales(
     start_date: Optional[date] = Query(None),
     end_date: Optional[date] = Query(None),
+    category: Optional[str] = Query(None, description="Filter by product category"),
     db: Session = Depends(get_db),
 ):
     """Get monthly sales with YoY comparison."""
     repo = DashboardRepository(db)
-    data = repo.get_monthly_revenue(start_date, end_date)
+    data = repo.get_monthly_revenue(start_date, end_date, category=category)
     return [
         SalesByMonth(
             year=int(row['year']),

@@ -52,27 +52,33 @@ export function KPICard({
         <CardTitle className="text-sm font-medium text-muted-foreground">
           {label}
         </CardTitle>
-        {icon && <div className="text-muted-foreground">{icon}</div>}
+        {icon && (
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+            {icon}
+          </div>
+        )}
       </CardHeader>
       <CardContent>
-        <div className="text-3xl font-bold text-foreground">
+        <div className="text-3xl font-bold tracking-tight text-foreground">
           {prefix}
           {formattedValue()}
           {suffix}
         </div>
         {trend !== null && trend !== undefined && (
-          <div className="mt-2 flex items-center gap-1 text-sm">
-            <TrendIcon />
+          <div className="mt-2 flex items-center gap-1.5 text-sm">
             <span
               className={cn(
-                trend_direction === "up" && "text-green-600",
-                trend_direction === "down" && "text-red-600",
+                "inline-flex items-center gap-0.5 rounded-md px-1.5 py-0.5 text-xs font-medium",
+                trend_direction === "up" && "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+                trend_direction === "down" && "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
                 (!trend_direction || trend_direction === "stable") &&
-                  "text-muted-foreground"
+                  "bg-muted text-muted-foreground"
               )}
             >
-              {Math.abs(trend).toFixed(1)}% vs previous period
+              <TrendIcon />
+              {Math.abs(trend).toFixed(1)}%
             </span>
+            <span className="text-muted-foreground">vs previous period</span>
           </div>
         )}
       </CardContent>
