@@ -3,6 +3,8 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from decimal import Decimal
+from datetime import date
+from typing import Optional
 
 from app.core.database import get_db
 from app.services.product_service import ProductService
@@ -14,10 +16,14 @@ router = APIRouter(prefix="/api/products", tags=["Products"])
 
 
 @router.get("/", response_model=list[ProductList])
-def get_all_products(db: Session = Depends(get_db)):
+def get_all_products(
+    start_date: Optional[date] = Query(None, description="Filter by start date"),
+    end_date: Optional[date] = Query(None, description="Filter by end date"),
+    db: Session = Depends(get_db),
+):
     """Get all products with revenue info."""
     service = ProductService(db)
-    return service.get_all_products()
+    return service.get_all_products(start_date, end_date)
 
 
 @router.get("/top", response_model=list[TopProductInsight])
@@ -62,14 +68,22 @@ def get_product_detail(product_id: int, db: Session = Depends(get_db)):
 
 
 @router.get("/analytics/price-distribution", response_model=list[PriceDistribution])
-def get_price_distribution(db: Session = Depends(get_db)):
+def get_price_distribution(
+    start_date: Optional[date] = Query(None, description="Filter by start date"),
+    end_date: Optional[date] = Query(None, description="Filter by end date"),
+    db: Session = Depends(get_db),
+):
     """Get price distribution of products."""
     service = ProductService(db)
-    return service.get_price_distribution()
+    return service.get_price_distribution(start_date, end_date)
 
 
 @router.get("/analytics/price-volume-matrix", response_model=list[ProductPerformance])
-def get_price_volume_matrix(db: Session = Depends(get_db)):
+def get_price_volume_matrix(
+    start_date: Optional[date] = Query(None, description="Filter by start date"),
+    end_date: Optional[date] = Query(None, description="Filter by end date"),
+    db: Session = Depends(get_db),
+):
     """Get price vs volume scatter plot data."""
     service = ProductService(db)
-    return service.get_price_volume_matrix()
+    return service.get_price_volume_matrix(start_date, end_date)

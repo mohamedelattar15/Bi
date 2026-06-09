@@ -2,6 +2,8 @@
 
 from sqlalchemy.orm import Session
 from decimal import Decimal
+from datetime import date
+from typing import Optional
 
 from app.repositories.dashboard_repository import DashboardRepository
 from app.schemas.basket import BasketRule, BasketAnalysisResult
@@ -13,8 +15,11 @@ class BasketService:
 
     def get_basket_analysis(self, min_support: float = 0.01,
                              min_lift: float = 1.5,
-                             limit: int = 50) -> BasketAnalysisResult:
-        rules_data = self.repo.get_basket_rules(min_support, min_lift, limit)
+                             limit: int = 50,
+                             start_date: Optional[date] = None,
+                             end_date: Optional[date] = None) -> BasketAnalysisResult:
+        rules_data = self.repo.get_basket_rules(min_support, min_lift, limit,
+                                                 start_date, end_date)
 
         rules = [
             BasketRule(

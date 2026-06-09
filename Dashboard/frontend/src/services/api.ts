@@ -85,13 +85,24 @@ export const salesApi = {
 // Products API
 // ==========================================
 
+function buildDateParams(params?: DashboardParams, hasExistingParams = false): string {
+  if (!params) return "";
+  const sp = new URLSearchParams();
+  if (params.start_date) sp.set("start_date", params.start_date);
+  if (params.end_date) sp.set("end_date", params.end_date);
+  const qs = sp.toString();
+  if (!qs) return "";
+  return hasExistingParams ? `&${qs}` : `?${qs}`;
+}
+
 export const productsApi = {
-  getAll: () => fetchApi<any[]>("/api/products/"),
+  getAll: (params?: DashboardParams) =>
+    fetchApi<any[]>(`/api/products/${buildDateParams(params)}`),
   getById: (id: number) => fetchApi<any>(`/api/products/${id}`),
-  getPriceDistribution: () =>
-    fetchApi<any[]>("/api/products/analytics/price-distribution"),
-  getPriceVolumeMatrix: () =>
-    fetchApi<any[]>("/api/products/analytics/price-volume-matrix"),
+  getPriceDistribution: (params?: DashboardParams) =>
+    fetchApi<any[]>(`/api/products/analytics/price-distribution${buildDateParams(params)}`),
+  getPriceVolumeMatrix: (params?: DashboardParams) =>
+    fetchApi<any[]>(`/api/products/analytics/price-volume-matrix${buildDateParams(params)}`),
 };
 
 // ==========================================
@@ -118,12 +129,12 @@ export const customersApi = {
 // ==========================================
 
 export const employeesApi = {
-  getTop: (limit = 5) =>
-    fetchApi<any[]>(`/api/employees/top?limit=${limit}`),
-  getPerformanceByAge: () =>
-    fetchApi<any[]>("/api/employees/performance/by-age"),
-  getPerformanceBySeniority: () =>
-    fetchApi<any[]>("/api/employees/performance/by-seniority"),
+  getTop: (limit = 5, params?: DashboardParams) =>
+    fetchApi<any[]>(`/api/employees/top?limit=${limit}${buildDateParams(params, true)}`),
+  getPerformanceByAge: (params?: DashboardParams) =>
+    fetchApi<any[]>(`/api/employees/performance/by-age${buildDateParams(params)}`),
+  getPerformanceBySeniority: (params?: DashboardParams) =>
+    fetchApi<any[]>(`/api/employees/performance/by-seniority${buildDateParams(params)}`),
   getById: (id: number) => fetchApi<any>(`/api/employees/${id}`),
 };
 
@@ -132,9 +143,9 @@ export const employeesApi = {
 // ==========================================
 
 export const basketApi = {
-  getAnalysis: (minSupport = 0.01, minLift = 1.5, limit = 50) =>
+  getAnalysis: (minSupport = 0.01, minLift = 1.5, limit = 50, params?: DashboardParams) =>
     fetchApi<any>(
-      `/api/basket/analysis?min_support=${minSupport}&min_lift=${minLift}&limit=${limit}`
+      `/api/basket/analysis?min_support=${minSupport}&min_lift=${minLift}&limit=${limit}${buildDateParams(params, true)}`
     ),
 };
 

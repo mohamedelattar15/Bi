@@ -56,7 +56,7 @@ export default function BasketAnalysisPage() {
     }));
   }
 
-  const { data: analysis, isLoading } = useBasketAnalysis(minSupport, minLift, 50);
+  const { data: analysis, isLoading } = useBasketAnalysis(minSupport, minLift, 50, dateParams);
 
   if (isLoading) return <LoadingSkeleton />;
 

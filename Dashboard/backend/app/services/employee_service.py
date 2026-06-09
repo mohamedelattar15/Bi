@@ -3,6 +3,7 @@
 from sqlalchemy.orm import Session
 from decimal import Decimal
 from typing import Optional
+from datetime import date
 
 from app.repositories.dashboard_repository import DashboardRepository
 from app.schemas.employee import (
@@ -14,8 +15,10 @@ class EmployeeService:
     def __init__(self, db: Session):
         self.repo = DashboardRepository(db)
 
-    def get_top_employees(self, limit: int = 5) -> list[TopEmployee]:
-        data = self.repo.get_top_employees(limit)
+    def get_top_employees(self, limit: int = 5,
+                          start_date: Optional[date] = None,
+                          end_date: Optional[date] = None) -> list[TopEmployee]:
+        data = self.repo.get_top_employees(limit, start_date, end_date)
         return [
             TopEmployee(
                 rank=i + 1,
@@ -35,10 +38,12 @@ class EmployeeService:
             return None
         return EmployeeDetail(**data)
 
-    def get_performance_by_age(self) -> list[EmployeePerformance]:
-        data = self.repo.get_employee_performance_by_age()
+    def get_performance_by_age(self, start_date: Optional[date] = None,
+                               end_date: Optional[date] = None) -> list[EmployeePerformance]:
+        data = self.repo.get_employee_performance_by_age(start_date, end_date)
         return [EmployeePerformance(**row) for row in data]
 
-    def get_performance_by_seniority(self) -> list[EmployeePerformance]:
-        data = self.repo.get_employee_performance_by_seniority()
+    def get_performance_by_seniority(self, start_date: Optional[date] = None,
+                                     end_date: Optional[date] = None) -> list[EmployeePerformance]:
+        data = self.repo.get_employee_performance_by_seniority(start_date, end_date)
         return [EmployeePerformance(**row) for row in data]

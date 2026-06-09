@@ -2,11 +2,12 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { productsApi } from "@/services/api";
+import type { DashboardParams } from "@/services/api";
 
-export function useProducts() {
+export function useProducts(dateParams?: DashboardParams) {
   return useQuery({
-    queryKey: ["products"],
-    queryFn: () => productsApi.getAll(),
+    queryKey: ["products", dateParams],
+    queryFn: () => productsApi.getAll(dateParams),
     staleTime: 10 * 60 * 1000,
   });
 }
@@ -19,18 +20,18 @@ export function useProductDetail(id: number) {
   });
 }
 
-export function usePriceDistribution() {
+export function usePriceDistribution(dateParams?: DashboardParams) {
   return useQuery({
-    queryKey: ["products", "price-distribution"],
-    queryFn: () => productsApi.getPriceDistribution(),
+    queryKey: ["products", "price-distribution", dateParams],
+    queryFn: () => productsApi.getPriceDistribution(dateParams),
     staleTime: 10 * 60 * 1000,
   });
 }
 
-export function usePriceVolumeMatrix() {
+export function usePriceVolumeMatrix(dateParams?: DashboardParams) {
   return useQuery({
-    queryKey: ["products", "price-volume-matrix"],
-    queryFn: () => productsApi.getPriceVolumeMatrix(),
+    queryKey: ["products", "price-volume-matrix", dateParams],
+    queryFn: () => productsApi.getPriceVolumeMatrix(dateParams),
     staleTime: 10 * 60 * 1000,
   });
 }

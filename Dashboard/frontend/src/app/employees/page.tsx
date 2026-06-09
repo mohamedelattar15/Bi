@@ -49,9 +49,9 @@ export default function EmployeesPage() {
     }));
   }
 
-  const { data: topEmployees, isLoading: loadingTop } = useTopEmployees(5);
-  const { data: byAge, isLoading: loadingAge } = useEmployeePerformanceByAge();
-  const { data: bySeniority, isLoading: loadingSeniority } = useEmployeePerformanceBySeniority();
+  const { data: topEmployees, isLoading: loadingTop } = useTopEmployees(5, dateParams);
+  const { data: byAge, isLoading: loadingAge } = useEmployeePerformanceByAge(dateParams);
+  const { data: bySeniority, isLoading: loadingSeniority } = useEmployeePerformanceBySeniority(dateParams);
 
   if (loadingTop || loadingAge || loadingSeniority) return <LoadingSkeleton />;
 

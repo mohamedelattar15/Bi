@@ -3,6 +3,7 @@
 from sqlalchemy.orm import Session
 from decimal import Decimal
 from typing import Optional
+from datetime import date
 
 from app.repositories.dashboard_repository import DashboardRepository
 from app.schemas.product import (
@@ -20,8 +21,9 @@ class ProductService:
             return None
         return ProductDetail(**data)
 
-    def get_all_products(self) -> list[ProductList]:
-        data = self.repo.get_price_volume_matrix()
+    def get_all_products(self, start_date: Optional[date] = None,
+                         end_date: Optional[date] = None) -> list[ProductList]:
+        data = self.repo.get_price_volume_matrix(start_date, end_date)
         return [
             ProductList(
                 product_id=row['productid'],
@@ -35,8 +37,9 @@ class ProductService:
             for i, row in enumerate(data)
         ]
 
-    def get_price_distribution(self) -> list[PriceDistribution]:
-        data = self.repo.get_price_distribution()
+    def get_price_distribution(self, start_date: Optional[date] = None,
+                               end_date: Optional[date] = None) -> list[PriceDistribution]:
+        data = self.repo.get_price_distribution(start_date, end_date)
         total = sum(Decimal(str(d['total_revenue'])) for d in data) or Decimal(1)
         return [
             PriceDistribution(
@@ -50,8 +53,9 @@ class ProductService:
             for row in data
         ]
 
-    def get_price_volume_matrix(self) -> list[ProductPerformance]:
-        data = self.repo.get_price_volume_matrix()
+    def get_price_volume_matrix(self, start_date: Optional[date] = None,
+                                end_date: Optional[date] = None) -> list[ProductPerformance]:
+        data = self.repo.get_price_volume_matrix(start_date, end_date)
         return [
             ProductPerformance(
                 product_id=row['productid'],

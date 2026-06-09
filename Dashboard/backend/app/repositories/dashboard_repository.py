@@ -164,7 +164,7 @@ class DashboardRepository:
         row = result.first()
         return dict(row._mapping) if row else None
 
-    def get_price_distribution(self) -> list[dict]:
+    def get_price_distribution(self, start_date=None, end_date=None) -> list[dict]:
         """Price distribution. Uses mv_daily_sales for revenue (pre-aggregated)."""
         query = """
             SELECT CASE 
@@ -177,12 +177,15 @@ class DashboardRepository:
             COALESCE(SUM(m.total_revenue), 0) AS total_revenue
             FROM dim_product p
             LEFT JOIN mv_daily_sales m ON p.productid = m.productid
-            GROUP BY range_label ORDER BY MIN(price)
+            WHERE 1=1
         """
-        result = self.db.execute(text(query))
+        params = {}
+        query = self._apply_date_filter(query, params, start_date, end_date, table_alias="m")
+        query += " GROUP BY range_label ORDER BY MIN(price)"
+        result = self.db.execute(text(query), params)
         return [dict(row._mapping) for row in result]
 
-    def get_price_volume_matrix(self) -> list[dict]:
+    def get_price_volume_matrix(self, start_date=None, end_date=None) -> list[dict]:
         """Price vs volume. Uses mv_daily_sales (pre-aggregated)."""
         query = """
             SELECT p.productid, p.productname, p.price,
@@ -191,10 +194,15 @@ class DashboardRepository:
                    p.categoryname AS category
             FROM dim_product p
             LEFT JOIN mv_daily_sales m ON p.productid = m.productid
+            WHERE 1=1
+        """
+        params = {}
+        query = self._apply_date_filter(query, params, start_date, end_date, table_alias="m")
+        query += """
             GROUP BY p.productid, p.productname, p.price, p.categoryname
             ORDER BY total_revenue DESC
         """
-        result = self.db.execute(text(query))
+        result = self.db.execute(text(query), params)
         return [dict(row._mapping) for row in result]
 
     # ---- CUSTOMER ANALYTICS ----
@@ -263,19 +271,23 @@ class DashboardRepository:
 
     # ---- EMPLOYEE ANALYTICS ----
 
-    def get_top_employees(self, limit: int = 5) -> list[dict]:
+    def get_top_employees(self, limit: int = 5, start_date=None, end_date=None) -> list[dict]:
         query = """
-            SELECT 
-                employeeid,
-                full_name,
-                total_revenue_generated AS total_revenue,
-                transactions_handled AS total_transactions,
-                gender
-            FROM mv_employee_performance
+            SELECT e.employeeid, e.full_name, e.gender,
+                   COALESCE(SUM(m.total_revenue), 0) AS total_revenue,
+                   COALESCE(SUM(m.transaction_count), 0) AS total_transactions
+            FROM dim_employee e
+            LEFT JOIN mv_daily_sales m ON e.employeeid = m.employeeid
+            WHERE 1=1
+        """
+        params = {"limit": limit}
+        query = self._apply_date_filter(query, params, start_date, end_date, table_alias="m")
+        query += """
+            GROUP BY e.employeeid, e.full_name, e.gender
             ORDER BY total_revenue DESC
             LIMIT :limit
         """
-        result = self.db.execute(text(query), {"limit": limit})
+        result = self.db.execute(text(query), params)
         return [dict(row._mapping) for row in result]
 
     def get_employee_detail(self, employee_id: int) -> Optional[dict]:
@@ -299,7 +311,7 @@ class DashboardRepository:
         row = result.first()
         return dict(row._mapping) if row else None
 
-    def get_employee_performance_by_age(self) -> list[dict]:
+    def get_employee_performance_by_age(self, start_date=None, end_date=None) -> list[dict]:
         query = """
             SELECT 
                 CASE 
@@ -308,18 +320,23 @@ class DashboardRepository:
                     ELSE 'Senior'
                 END AS group_name,
                 COUNT(DISTINCT e.employeeid) AS employee_count,
-                SUM(perf.total_revenue_generated) AS total_revenue,
-                SUM(perf.transactions_handled) AS total_transactions,
-                AVG(perf.total_revenue_generated) AS avg_revenue_per_employee
-            FROM mv_employee_performance perf
-            JOIN dim_employee e ON perf.employeeid = e.employeeid
+                COALESCE(SUM(m.total_revenue), 0) AS total_revenue,
+                COALESCE(SUM(m.transaction_count), 0) AS total_transactions,
+                COALESCE(SUM(m.total_revenue) / NULLIF(COUNT(DISTINCT e.employeeid), 0), 0) AS avg_revenue_per_employee
+            FROM dim_employee e
+            LEFT JOIN mv_daily_sales m ON e.employeeid = m.employeeid
+            WHERE 1=1
+        """
+        params = {}
+        query = self._apply_date_filter(query, params, start_date, end_date, table_alias="m")
+        query += """
             GROUP BY group_name
             ORDER BY total_revenue DESC
         """
-        result = self.db.execute(text(query))
+        result = self.db.execute(text(query), params)
         return [dict(row._mapping) for row in result]
 
-    def get_employee_performance_by_seniority(self) -> list[dict]:
+    def get_employee_performance_by_seniority(self, start_date=None, end_date=None) -> list[dict]:
         query = """
             SELECT 
                 CASE 
@@ -328,32 +345,47 @@ class DashboardRepository:
                     ELSE 'Senior'
                 END AS group_name,
                 COUNT(DISTINCT e.employeeid) AS employee_count,
-                SUM(perf.total_revenue_generated) AS total_revenue,
-                SUM(perf.transactions_handled) AS total_transactions,
-                AVG(perf.total_revenue_generated) AS avg_revenue_per_employee
-            FROM mv_employee_performance perf
-            JOIN dim_employee e ON perf.employeeid = e.employeeid
+                COALESCE(SUM(m.total_revenue), 0) AS total_revenue,
+                COALESCE(SUM(m.transaction_count), 0) AS total_transactions,
+                COALESCE(SUM(m.total_revenue) / NULLIF(COUNT(DISTINCT e.employeeid), 0), 0) AS avg_revenue_per_employee
+            FROM dim_employee e
+            LEFT JOIN mv_daily_sales m ON e.employeeid = m.employeeid
+            WHERE 1=1
+        """
+        params = {}
+        query = self._apply_date_filter(query, params, start_date, end_date, table_alias="m")
+        query += """
             GROUP BY group_name
             ORDER BY total_revenue DESC
         """
-        result = self.db.execute(text(query))
+        result = self.db.execute(text(query), params)
         return [dict(row._mapping) for row in result]
 
     # ---- BASKET ANALYSIS ----
 
     def get_basket_rules(self, min_support: float = 0.01,
                          min_lift: float = 1.5,
-                         limit: int = 50) -> list[dict]:
+                         limit: int = 50,
+                         start_date=None, end_date=None) -> list[dict]:
         query = """
             WITH transaction_products AS (
                 SELECT DISTINCT s.transactionnumber, s.productid, p.productname
                 FROM fact_sales s
                 JOIN dim_product p ON s.productid = p.productid
+                WHERE 1=1
+        """
+        params = {"min_support": min_support, "min_lift": min_lift, "limit": limit}
+        query = self._apply_date_filter(query, params, start_date, end_date, table_alias="s")
+        query += """
             ),
             total_trans AS (
                 SELECT COUNT(DISTINCT transactionnumber) AS cnt FROM fact_sales
+                WHERE 1=1
+        """
+        # Also apply date filter to total_trans count so support/lift are relative to the filtered period
+        query = self._apply_date_filter(query, params, start_date, end_date, table_alias="fact_sales")
+        query += """
             ),
-            -- Pre-compute per-product distinct transaction counts (can't use DISTINCT inside window functions)
             product_counts AS (
                 SELECT productname, COUNT(DISTINCT transactionnumber) AS txn_count
                 FROM transaction_products
@@ -381,7 +413,7 @@ class DashboardRepository:
               AND (pp.both_count::NUMERIC / tt.cnt) / NULLIF((pc1.txn_count::NUMERIC / tt.cnt) * (pc2.txn_count::NUMERIC / tt.cnt), 0) >= :min_lift
             ORDER BY lift DESC LIMIT :limit
         """
-        result = self.db.execute(text(query), {"min_support": min_support, "min_lift": min_lift, "limit": limit})
+        result = self.db.execute(text(query), params)
         return [dict(row._mapping) for row in result]
 
     # ====================================================================

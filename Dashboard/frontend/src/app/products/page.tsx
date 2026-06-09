@@ -47,9 +47,9 @@ export default function ProductsPage() {
     }));
   }
 
-  const { data: products, isLoading: loadingProducts } = useProducts();
-  const { data: priceDist, isLoading: loadingPrice } = usePriceDistribution();
-  const { data: priceVolume, isLoading: loadingMatrix } = usePriceVolumeMatrix();
+  const { data: products, isLoading: loadingProducts } = useProducts(dateParams);
+  const { data: priceDist, isLoading: loadingPrice } = usePriceDistribution(dateParams);
+  const { data: priceVolume, isLoading: loadingMatrix } = usePriceVolumeMatrix(dateParams);
 
   if (loadingProducts || loadingPrice || loadingMatrix) return <LoadingSkeleton />;
 
