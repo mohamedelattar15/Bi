@@ -17,6 +17,11 @@ Thumbs.db
 *.csv
 *.pbix
 
+# Fichiers volumineux exclus du Git (dépassent la limite GitHub 100MB)
+data.zip
+pbix_content/
+PowerBI\ Version/Dashboard_grocery_db.zip
+
 # Python
 __pycache__/
 *.py[cod]
