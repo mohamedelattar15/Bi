@@ -476,8 +476,6 @@ R²   :       0.8678
 
 **Insight clé** : La configuration additive à tendance amortie surpasse significativement la variante multiplicative (8.7% MAPE), faisant de Holt-Winters le modèle champion.
 
-![Holt-Winters Forecast](PowerBi_mining_ML/AI/models/modele2_holtwinters.png)
-
 ---
 
 #### 5.3 — XGBoost Regressor
@@ -507,8 +505,6 @@ R²   :       0.8184
 3. `lag_1` — Revenu du mois précédent
 4. `yoy_ratio` — Ratio année-sur-année
 5. `rolling_6` — Moyenne mobile 6 mois
-
-![XGBoost Forecast](PowerBi_mining_ML/AI/models/modele3_xgboost.png)
 
 ---
 
@@ -542,8 +538,6 @@ R²   :       0.2128
 5. `month_cos` — Encodage cyclique du mois
 
 Random Forest sous-performe en raison des données d'entraînement limitées (48 mois).
-
-![Random Forest Forecast](PowerBi_mining_ML/AI/models/modele4_random_forest.png)
 
 ---
 
@@ -604,8 +598,6 @@ Prévisions de revenus sur **12 mois pour 2023** avec le modèle champion Holt-W
 - **2023 prévision** : ~14.78M€
 - **Croissance estimée** : **+4.8%**
 
-![Forecast 2023](PowerBi_mining_ML/AI/models/forecast_2023.png)
-
 ---
 
 #### Résumé & Points Clés du ML
@@ -623,33 +615,46 @@ Prévisions de revenus sur **12 mois pour 2023** avec le modèle champion Holt-W
 
 ## Screenshots
 
-### Data Model (Star Schema)
+Les captures d'écran sont organisées dans l'ordre du pipeline.
+
+---
+
+### Étape 1 — Apache Hop (ETL Pipeline)
+
+![Apache Hop Pipeline](PowerBi_mining_ML/Images/Apache%20Hop.png)
+
+### Étape 2 — Data Model (Star Schema PostgreSQL)
 
 ![Data Model](PowerBi_mining_ML/Images/data%20model.png)
 
-### Apache Hop Pipeline
+### Étape 3 — Power BI Dashboards
 
-![Apache Hop Pipeline](PowerBi_mining_ML/Images/Capture%20d'%C3%A9cran%202026-06-03%20012115.png)
-
-### Sales Dashboard
+#### Sales Dashboard
 
 ![Sales Dashboard](PowerBi_mining_ML/Images/Capture%20d'%C3%A9cran%202026-06-03%20020525.png)
 
-### Product Dashboard
+#### Product Dashboard
 
 ![Product Dashboard](PowerBi_mining_ML/Images/Capture%20d'%C3%A9cran%202026-06-03%20020535.png)
 
-### Customer Dashboard
+#### Customer Dashboard
 
 ![Customer Dashboard](PowerBi_mining_ML/Images/Capture%20d'%C3%A9cran%202026-06-03%20020543.png)
 
-### Employee Dashboard
+#### Employee Dashboard
 
 ![Employee Dashboard](PowerBi_mining_ML/Images/Capture%20d'%C3%A9cran%202026-06-03%20020549.png)
 
-### Basket Analysis Dashboard
+### Étape 4 — Basket Analysis Dashboard (Data Mining)
 
 ![Basket Analysis Dashboard](PowerBi_mining_ML/Images/Capture%20d'%C3%A9cran%202026-06-03%20020602.png)
+
+### Étape 5 — Machine Learning (Forecasting)
+
+![Holt-Winters Forecast](PowerBi_mining_ML/AI/models/modele2_holtwinters.png)
+![XGBoost Forecast](PowerBi_mining_ML/AI/models/modele3_xgboost.png)
+![Random Forest Forecast](PowerBi_mining_ML/AI/models/modele4_random_forest.png)
+![Forecast 2023](PowerBi_mining_ML/AI/models/forecast_2023.png)
 
 ## Getting Started
 
