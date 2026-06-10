@@ -147,15 +147,26 @@ export default function SalesDashboardPage() {
         {/* Month-over-Month Growth */}
         <Card className="card-hover">
           <CardHeader>
-            <CardTitle>Month-over-Month Growth</CardTitle>
-            <CardDescription>Revenue change vs previous month — identify acceleration/slowdown</CardDescription>
+            <CardTitle>⭐ Month-over-Month Growth %</CardTitle>
+            <CardDescription>
+              Revenue change vs previous month — green = growth, red = decline
+              <span className="ml-2 text-xs text-muted-foreground">
+                ⌀ run rate: €{monthOverMonth && monthOverMonth.length > 0
+                  ? Number(monthOverMonth[monthOverMonth.length - 1]?.monthly_run_rate || 0).toLocaleString()
+                  : "—"}
+              </span>
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <ExpandableChart title="MoM Growth" description="Month-over-month revenue change">
+            <ExpandableChart title="MoM Growth" description="Month-over-month revenue change percentage">
               <RechartsBarChart
-                labels={monthOverMonth?.map((m: any) => m.month_label) || []}
+                labels={monthOverMonth?.map((m: any) => m.month_name?.substring(0, 3) + " " + m.year) || []}
                 datasets={[
-                  { label: "Revenue", data: monthOverMonth?.map((m: any) => Number(m.revenue)) || [] },
+                  {
+                    label: "MoM Growth %",
+                    data: monthOverMonth?.map((m: any) => Number(m.mom_growth_pct)) || [],
+                    color: "var(--chart-4)",
+                  },
                 ]}
                 height={320}
               />
