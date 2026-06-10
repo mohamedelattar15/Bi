@@ -1,17 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useBasketAnalysis } from "@/hooks/useBasketAnalysis";
 import { DateRangeFilter } from "@/components/DateRangeFilter";
 import { ExpandableChart } from "@/components/ExpandableChart";
-import { FilterDialog } from "@/components/FilterDialog";
-import { ChartFilterBar, type FilterOption } from "@/components/ChartFilterBar";
 import { RechartsBarChart } from "@/components/charts/RechartsBarChart";
 import { RechartsScatterChart } from "@/components/charts/RechartsScatterChart";
 import { Slider } from "@/components/ui/slider";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardAction } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -21,158 +17,233 @@ import {
   TableHead,
   TableCell,
 } from "@/components/ui/table";
-import { filtersApi } from "@/services/api";
 import { LoadingSkeleton } from "@/components/LoadingSkeleton";
 import { KPICard } from "@/components/KPICard";
-import { ShoppingCart, Layers, TrendingUp, Filter } from "lucide-react";
+import { ShoppingCart, Layers, TrendingUp, Filter, Lightbulb, Crosshair } from "lucide-react";
 import type { DashboardParams } from "@/services/api";
-
-type ChartFilters = Record<string, string>;
 
 export default function BasketAnalysisPage() {
   const [dateParams, setDateParams] = useState<DashboardParams>({});
   const [minSupport, setMinSupport] = useState(0.01);
   const [minLift, setMinLift] = useState(1.5);
-  const [filterOptions, setFilterOptions] = useState<Record<string, string[]>>({});
-  const [rulesFilters, setRulesFilters] = useState<ChartFilters>({});
-  const [matrixFilters, setMatrixFilters] = useState<ChartFilters>({});
-
-  useEffect(() => {
-    filtersApi.getOptions().then((opts) => {
-      const m: Record<string, string[]> = {};
-      if (opts.categories?.length) m.category = opts.categories;
-      if (opts.countries?.length) m.country = opts.countries;
-      setFilterOptions(m);
-    }).catch(() => {});
-  }, []);
-
-  function chartFilters(
-    f: ChartFilters, setF: (v: ChartFilters) => void, dims: string[]
-  ): FilterOption[] {
-    return dims.filter((d) => (filterOptions[d]?.length ?? 0) > 0).map((d) => ({
-      param: d, label: d.charAt(0).toUpperCase() + d.slice(1),
-      options: filterOptions[d], value: f[d] ?? "__all__",
-      onChange: (val: string) => setF({ ...f, [d]: val }),
-    }));
-  }
 
   const { data: analysis, isLoading } = useBasketAnalysis(minSupport, minLift, 50, dateParams);
 
   if (isLoading) return <LoadingSkeleton />;
 
-  const BASKET_DIMS = ["category"];
+  // Business insight helpers
+  const totalRules = analysis?.rules?.length || 0;
+  const strongRules = analysis?.rules?.filter((r: any) => Number(r.lift) > 2.0).length || 0;
+  const highestLift = analysis?.rules?.length > 0
+    ? Math.max(...analysis?.rules?.map((r: any) => Number(r.lift))) : 0;
+  const topPair = analysis?.rules?.length > 0 ? analysis.rules[0] : null;
 
   return (
     <div className="space-y-6">
-      <DateRangeFilter title="Basket Analysis" onApply={setDateParams} />
+      <DateRangeFilter title="Cross-Sell Analysis — Basket Analysis" onApply={setDateParams} />
+
+      {/* ═══ Row 1: Overview KPIs ═══ */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <KPICard label="Total Transactions" value={analysis?.total_transactions || 0} format="number" icon={<ShoppingCart className="h-5 w-5" />} />
-        <KPICard label="Association Rules Found" value={analysis?.rules?.length || 0} format="number" icon={<Layers className="h-5 w-5" />} />
-        <KPICard label="Min Support" value={minSupport * 100} suffix="%" format="percentage" icon={<Filter className="h-5 w-5" />} />
-        <KPICard label="Min Lift" value={minLift} format="number" icon={<TrendingUp className="h-5 w-5" />} />
+        <KPICard label="Total Transactions Analyzed" value={analysis?.total_transactions || 0} format="number" icon={<ShoppingCart className="h-5 w-5" />} />
+        <KPICard label="Products in Scope" value={analysis?.total_products || 0} format="number" icon={<Layers className="h-5 w-5" />} />
+        <KPICard label="Association Rules Found" value={totalRules} format="number" icon={<Lightbulb className="h-5 w-5" />} />
+        <KPICard label="Strong Rules (Lift &gt; 2)" value={strongRules} format="number" icon={<Crosshair className="h-5 w-5" />} />
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Analysis Thresholds</CardTitle>
-          <CardDescription>Adjust the minimum support and lift values to filter association rules</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap gap-10">
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium text-foreground">
-                Min Support: <span className="text-primary font-semibold">{(minSupport * 100).toFixed(1)}%</span>
-              </label>
-              <div className="flex items-center gap-3">
-                <span className="text-xs text-muted-foreground">0.1%</span>
-                <Slider
-                  value={[minSupport]}
-                  onValueChange={([v]) => setMinSupport(v)}
-                  min={0.001}
-                  max={0.1}
-                  step={0.001}
-                  className="w-40"
-                />
-                <span className="text-xs text-muted-foreground">10%</span>
-              </div>
-            </div>
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium text-foreground">
-                Min Lift: <span className="text-primary font-semibold">{minLift.toFixed(1)}</span>
-              </label>
-              <div className="flex items-center gap-3">
-                <span className="text-xs text-muted-foreground">1.0</span>
-                <Slider
-                  value={[minLift]}
-                  onValueChange={([v]) => setMinLift(v)}
-                  min={1.0}
-                  max={3.0}
-                  step={0.1}
-                  className="w-40"
-                />
-                <span className="text-xs text-muted-foreground">3.0</span>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
+      {/* ═══ Row 2: Threshold Controls + Key Insight ═══ */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <Card><CardHeader><CardTitle>Top 10 Product Associations (by Lift)</CardTitle><CardDescription>Highest lift values indicating strong product pairs</CardDescription>
-          <CardAction><FilterDialog chartName="Top Associations" filters={chartFilters(rulesFilters, setRulesFilters, BASKET_DIMS)} /></CardAction>
-        </CardHeader><CardContent>
-          <ExpandableChart title="Top 10 Product Associations" description="Highest lift values indicating strong product pairs"
-            filterControls={<ChartFilterBar filters={chartFilters(rulesFilters, setRulesFilters, BASKET_DIMS)} />}
-          >
-            <RechartsBarChart
-              labels={analysis?.top_rules_by_lift?.slice(0, 10).map((r: any) => r.product1.split(" ").slice(0, 2).join(" ") + " - " + r.product2.split(" ").slice(0, 2).join(" ")) || []}
-              datasets={[{ label: "Lift", data: analysis?.top_rules_by_lift?.slice(0, 10).map((r: any) => Number(r.lift)) || [] }]}
-              height={320} horizontal />
-          </ExpandableChart>
-        </CardContent></Card>
-        <Card><CardHeader><CardTitle>Support vs Lift Matrix</CardTitle><CardDescription>Relationship between rule support and lift values</CardDescription>
-          <CardAction><FilterDialog chartName="Support vs Lift" filters={chartFilters(matrixFilters, setMatrixFilters, BASKET_DIMS)} /></CardAction>
-        </CardHeader><CardContent>
-          <ExpandableChart title="Support vs Lift Matrix" description="Relationship between rule support and lift values"
-            filterControls={<ChartFilterBar filters={chartFilters(matrixFilters, setMatrixFilters, BASKET_DIMS)} />}
-          >
-            <RechartsScatterChart
-              dataPoints={analysis?.matrix_data?.map((m: any) => ({ x: Number(m.support) * 100, y: Number(m.lift), label: m.label })) || []}
-              xLabel="Support (%)" yLabel="Lift" height={320} />
-          </ExpandableChart>
-        </CardContent></Card>
+        {/* Controls */}
+        <Card className="card-hover">
+          <CardHeader>
+            <CardTitle>Analysis Thresholds</CardTitle>
+            <CardDescription>
+              Adjust to filter which product associations are meaningful enough to act on
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-10">
+              <div className="flex flex-col gap-2">
+                <label className="text-sm font-medium text-foreground">
+                  Minimum Support: <span className="text-primary font-semibold">{(minSupport * 100).toFixed(1)}%</span>
+                </label>
+                <div className="flex items-center gap-3">
+                  <span className="text-xs text-muted-foreground">0.1%</span>
+                  <Slider
+                    value={[minSupport]}
+                    onValueChange={([v]) => setMinSupport(v)}
+                    min={0.001}
+                    max={0.1}
+                    step={0.001}
+                    className="w-40"
+                  />
+                  <span className="text-xs text-muted-foreground">10%</span>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  How often the product pair appears together
+                </p>
+              </div>
+              <div className="flex flex-col gap-2">
+                <label className="text-sm font-medium text-foreground">
+                  Minimum Lift: <span className="text-primary font-semibold">{minLift.toFixed(1)}</span>
+                </label>
+                <div className="flex items-center gap-3">
+                  <span className="text-xs text-muted-foreground">1.0</span>
+                  <Slider
+                    value={[minLift]}
+                    onValueChange={([v]) => setMinLift(v)}
+                    min={1.0}
+                    max={3.0}
+                    step={0.1}
+                    className="w-40"
+                  />
+                  <span className="text-xs text-muted-foreground">3.0</span>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  How much more likely they&apos;re bought together vs independently
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Key Business Insight */}
+        <Card className="card-hover">
+          <CardHeader>
+            <CardTitle>Cross-Sell Opportunity</CardTitle>
+            <CardDescription>Top association insight based on current thresholds</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {topPair ? (
+              <>
+                <div className="rounded-lg border bg-gradient-to-r from-blue-50 to-indigo-50 p-4">
+                  <div className="text-xs text-muted-foreground">STRONGEST ASSOCIATION</div>
+                  <div className="mt-1 text-lg font-semibold">{topPair.basket_label}</div>
+                  <div className="mt-3 grid grid-cols-3 gap-2 text-center">
+                    <div>
+                      <div className="text-sm font-bold text-blue-600">{(Number(topPair.support) * 100).toFixed(2)}%</div>
+                      <div className="text-xs text-muted-foreground">Support</div>
+                    </div>
+                    <div>
+                      <div className="text-sm font-bold text-green-600">{(Number(topPair.confidence_p1) * 100).toFixed(1)}%</div>
+                      <div className="text-xs text-muted-foreground">Confidence</div>
+                    </div>
+                    <div>
+                      <div className="text-sm font-bold text-purple-600">{Number(topPair.lift).toFixed(2)}x</div>
+                      <div className="text-xs text-muted-foreground">Lift</div>
+                    </div>
+                  </div>
+                </div>
+                <div className="rounded-lg border bg-amber-50 p-3">
+                  <div className="flex items-start gap-2">
+                    <Lightbulb className="mt-0.5 h-4 w-4 text-amber-600 shrink-0" />
+                    <div>
+                      <p className="text-sm text-amber-800">
+                        <strong>Action:</strong> Customers buying these products together spend more.
+                        Consider bundling, shelf placement, or targeted promotions.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="flex h-full items-center justify-center">
+                <p className="text-sm text-muted-foreground">Adjust thresholds to find valid associations</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
 
-      <Card>
+      {/* ═══ Row 3: Top Associations + Association Quality Matrix ═══ */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        {/* Top 10 by Lift */}
+        <Card className="card-hover">
+          <CardHeader>
+            <CardTitle>Top 10 Product Pairs (by Lift)</CardTitle>
+            <CardDescription>Which products are most strongly associated? Lift &gt; 1 = positive correlation</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ExpandableChart title="Top 10 Product Associations" description="Highest lift values indicating strong product pairs">
+              <RechartsBarChart
+                labels={analysis?.top_rules_by_lift?.slice(0, 10).map((r: any) =>
+                  r.product1.split(" ").slice(0, 2).join(" ") + " — " + r.product2.split(" ").slice(0, 2).join(" ")
+                ) || []}
+                datasets={[{ label: "Lift", data: analysis?.top_rules_by_lift?.slice(0, 10).map((r: any) => Number(r.lift)) || [] }]}
+                height={320}
+                horizontal
+              />
+            </ExpandableChart>
+          </CardContent>
+        </Card>
+
+        {/* Support vs Lift Matrix */}
+        <Card className="card-hover">
+          <CardHeader>
+            <CardTitle>Association Quality Matrix</CardTitle>
+            <CardDescription>
+              Support (frequency) vs Lift (strength) — top-right quadrant = most actionable opportunities
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ExpandableChart title="Support vs Lift Matrix" description="Relationship between rule support and lift values">
+              <RechartsScatterChart
+                dataPoints={analysis?.matrix_data?.map((m: any) => ({ x: Number(m.support) * 100, y: Number(m.lift), label: m.label })) || []}
+                xLabel="Support (%)" yLabel="Lift (strength of association)" height={320} />
+            </ExpandableChart>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* ═══ Row 4: Full Association Rules Table ═══ */}
+      <Card className="card-hover">
         <CardHeader>
-          <CardTitle>Association Rules ({analysis?.rules?.length || 0} found)</CardTitle>
-          <CardDescription>Product pairs frequently purchased together sorted by lift</CardDescription>
+          <CardTitle>Association Rules ({totalRules} found)</CardTitle>
+          <CardDescription>
+            Product pairs frequently purchased together — sorted by lift. Use these for cross-selling, bundling, and placement strategies.
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-12">#</TableHead>
-                <TableHead>Product Pair</TableHead>
-                <TableHead className="text-right">Support (%)</TableHead>
-                <TableHead className="text-right">Confidence P1→P2 (%)</TableHead>
-                <TableHead className="text-right">Confidence P2→P1 (%)</TableHead>
-                <TableHead className="text-right">Lift</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {analysis?.rules?.slice(0, 20).map((rule: any, i: number) => (
-                <TableRow key={i}>
-                  <TableCell className="text-muted-foreground">{i + 1}</TableCell>
-                  <TableCell className="font-medium">{rule.basket_label}</TableCell>
-                  <TableCell className="text-right">{(Number(rule.support) * 100).toFixed(2)}%</TableCell>
-                  <TableCell className="text-right">{(Number(rule.confidence_p1) * 100).toFixed(1)}%</TableCell>
-                  <TableCell className="text-right">{(Number(rule.confidence_p2) * 100).toFixed(1)}%</TableCell>
-                  <TableCell className="text-right"><Badge variant="secondary">{Number(rule.lift).toFixed(2)}</Badge></TableCell>
+          <div className="max-h-[480px] overflow-y-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-12">#</TableHead>
+                  <TableHead>Product Pair</TableHead>
+                  <TableHead className="text-right">Support (%)</TableHead>
+                  <TableHead className="text-right">Confidence A→B</TableHead>
+                  <TableHead className="text-right">Confidence B→A</TableHead>
+                  <TableHead className="text-right">Lift</TableHead>
+                  <TableHead className="text-center">Strength</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {analysis?.rules?.slice(0, 20).map((rule: any, i: number) => {
+                  const lift = Number(rule.lift);
+                  return (
+                    <TableRow key={i}>
+                      <TableCell className="text-muted-foreground">{i + 1}</TableCell>
+                      <TableCell className="font-medium max-w-[250px] truncate">{rule.basket_label}</TableCell>
+                      <TableCell className="text-right">{(Number(rule.support) * 100).toFixed(2)}%</TableCell>
+                      <TableCell className="text-right">{(Number(rule.confidence_p1) * 100).toFixed(1)}%</TableCell>
+                      <TableCell className="text-right">{(Number(rule.confidence_p2) * 100).toFixed(1)}%</TableCell>
+                      <TableCell className="text-right">
+                        <Badge variant={lift >= 2 ? "default" : lift >= 1.5 ? "secondary" : "outline"}>
+                          {lift.toFixed(2)}x
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <span className={`text-xs font-medium ${
+                          lift >= 2 ? "text-green-600" : lift >= 1.5 ? "text-amber-600" : "text-muted-foreground"
+                        }`}>
+                          {lift >= 2 ? "Strong" : lift >= 1.5 ? "Moderate" : "Weak"}
+                        </span>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
     </div>

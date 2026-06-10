@@ -14,10 +14,10 @@ import {
 import { Separator } from "@/components/ui/separator";
 
 const navItems = [
-  { href: "/", label: "Sales Dashboard", icon: Home },
-  { href: "/products", label: "Products", icon: Package },
-  { href: "/customers", label: "Customers", icon: Users },
-  { href: "/employees", label: "Employees", icon: Briefcase },
+  { href: "/", label: "Sales Performence", icon: Home },
+  { href: "/products", label: "Product Performence", icon: Package },
+  { href: "/customers", label: "Costumer Performence", icon: Users },
+  { href: "/employees", label: "Employee Performence", icon: Briefcase },
   { href: "/basket-analysis", label: "Basket Analysis", icon: ShoppingCart },
 ];
 

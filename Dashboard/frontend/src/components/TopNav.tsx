@@ -5,10 +5,10 @@ import { Bell, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const pageTitles: Record<string, string> = {
-  "/": "Sales Dashboard",
-  "/products": "Product Analysis",
-  "/customers": "Customer Analysis",
-  "/employees": "Employee Analysis",
+  "/": "Sales Performence",
+  "/products": "Product Performence",
+  "/customers": "Costumer Performence",
+  "/employees": "Employee Performence",
   "/basket-analysis": "Basket Analysis",
 };
 

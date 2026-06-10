@@ -35,3 +35,35 @@ export function usePriceVolumeMatrix(dateParams?: DashboardParams) {
     staleTime: 10 * 60 * 1000,
   });
 }
+
+export function useAllergenDistribution() {
+  return useQuery({
+    queryKey: ["products", "allergen-distribution"],
+    queryFn: () => productsApi.getAllergenDistribution(),
+    staleTime: 10 * 60 * 1000,
+  });
+}
+
+export function useResistanceDistribution() {
+  return useQuery({
+    queryKey: ["products", "resistance-distribution"],
+    queryFn: () => productsApi.getResistanceDistribution(),
+    staleTime: 10 * 60 * 1000,
+  });
+}
+
+export function useCategoryGrowth(dateParams?: DashboardParams) {
+  return useQuery({
+    queryKey: ["products", "category-growth", dateParams],
+    queryFn: () => productsApi.getCategoryGrowth(dateParams),
+    staleTime: 10 * 60 * 1000,
+  });
+}
+
+export function useProductQuantitySummary(dateParams?: DashboardParams) {
+  return useQuery({
+    queryKey: ["products", "quantity-summary", dateParams],
+    queryFn: () => productsApi.getQuantitySummary(dateParams),
+    staleTime: 10 * 60 * 1000,
+  });
+}

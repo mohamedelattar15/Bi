@@ -46,10 +46,11 @@ class BasketService:
         total_transactions = int(
             self.repo.get_all_kpis()["total_transactions"]
         )
+        total_products = self.repo.get_basket_total_products()
 
         return BasketAnalysisResult(
             total_transactions=total_transactions,
-            total_products=0,  # would need separate query
+            total_products=total_products,
             min_support=Decimal(str(min_support)),
             min_lift=Decimal(str(min_lift)),
             rules=rules,

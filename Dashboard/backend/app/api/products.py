@@ -11,6 +11,8 @@ from app.services.product_service import ProductService
 from app.repositories.dashboard_repository import DashboardRepository
 from app.schemas.product import ProductDetail, ProductList, PriceDistribution, ProductPerformance
 from app.schemas.analytics import TopProductInsight, SalesByResistance
+from pydantic import BaseModel
+from decimal import Decimal
 
 router = APIRouter(prefix="/api/products", tags=["Products"])
 
@@ -87,3 +89,99 @@ def get_price_volume_matrix(
     """Get price vs volume scatter plot data."""
     service = ProductService(db)
     return service.get_price_volume_matrix(start_date, end_date)
+
+
+# ── New endpoints mapped from PBIX Product page ──
+
+class AllergenDistribution(BaseModel):
+    isallergic: str
+    product_count: int
+
+
+class ResistanceDistribution(BaseModel):
+    resistance: str
+    product_count: int
+
+
+class CategoryGrowth(BaseModel):
+    category: str
+    revenue: Decimal
+    quantity: int
+    transactions: int
+    ca_growth_pct: Decimal
+    quant_growth_pct: Decimal
+    transa_growth_pct: Decimal
+
+
+class ProductQuantitySummary(BaseModel):
+    product_id: int
+    product_name: str
+    category: str
+    total_quantity: int
+    total_revenue: Decimal
+
+
+@router.get("/analytics/allergen-distribution", response_model=list[AllergenDistribution])
+def get_allergen_distribution(db: Session = Depends(get_db)):
+    """Product count by allergen status (for Pie chart)."""
+    repo = DashboardRepository(db)
+    data = repo.get_products_by_allergen()
+    return [
+        AllergenDistribution(isallergic=row['isallergic'], product_count=int(row['product_count']))
+        for row in data
+    ]
+
+
+@router.get("/analytics/resistance-distribution", response_model=list[ResistanceDistribution])
+def get_resistance_distribution(db: Session = Depends(get_db)):
+    """Product count by resistance level (for Pie chart)."""
+    repo = DashboardRepository(db)
+    data = repo.get_products_by_resistance()
+    return [
+        ResistanceDistribution(resistance=row['resistance'], product_count=int(row['product_count']))
+        for row in data
+    ]
+
+
+@router.get("/analytics/category-growth", response_model=list[CategoryGrowth])
+def get_category_growth(
+    start_date: Optional[date] = Query(None),
+    end_date: Optional[date] = Query(None),
+    db: Session = Depends(get_db),
+):
+    """Growth rates by category (for Pivot Table)."""
+    repo = DashboardRepository(db)
+    data = repo.get_category_growth_rates(start_date, end_date)
+    return [
+        CategoryGrowth(
+            category=row['category'],
+            revenue=row['revenue'],
+            quantity=int(row['quantity']),
+            transactions=int(row['transactions']),
+            ca_growth_pct=Decimal(str(row['ca_growth_pct'])),
+            quant_growth_pct=Decimal(str(row['quant_growth_pct'])),
+            transa_growth_pct=Decimal(str(row['transa_growth_pct'])),
+        )
+        for row in data
+    ]
+
+
+@router.get("/analytics/quantity-summary", response_model=list[ProductQuantitySummary])
+def get_product_quantity_summary(
+    start_date: Optional[date] = Query(None),
+    end_date: Optional[date] = Query(None),
+    db: Session = Depends(get_db),
+):
+    """Quantity sold by product (for Bar chart)."""
+    repo = DashboardRepository(db)
+    data = repo.get_products_quantity_summary(start_date, end_date)
+    return [
+        ProductQuantitySummary(
+            product_id=int(row['productid']),
+            product_name=row['productname'],
+            category=row['category'],
+            total_quantity=int(row['total_quantity']),
+            total_revenue=row['total_revenue'],
+        )
+        for row in data
+    ]

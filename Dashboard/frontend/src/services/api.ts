@@ -79,6 +79,14 @@ export const salesApi = {
     fetchApi<any[]>(`/api/sales/by-category${buildSearchParams(params)}`),
   getMonthly: (params?: ChartFilterParams) =>
     fetchApi<any[]>(`/api/sales/monthly${buildSearchParams(params)}`),
+  getByCity: (params?: DashboardParams) =>
+    fetchApi<any[]>(`/api/sales/by-city${buildSearchParams(params)}`),
+  getFunnelByCity: (params?: DashboardParams) =>
+    fetchApi<any[]>(`/api/sales/funnel-by-city${buildSearchParams(params)}`),
+  getCaGrowthByYear: (params?: DashboardParams) =>
+    fetchApi<any[]>(`/api/sales/ca-growth-by-year${buildSearchParams(params)}`),
+  getByClass: (params?: DashboardParams) =>
+    fetchApi<any[]>(`/api/sales/by-class${buildSearchParams(params)}`),
 };
 
 // ==========================================
@@ -103,6 +111,14 @@ export const productsApi = {
     fetchApi<any[]>(`/api/products/analytics/price-distribution${buildDateParams(params)}`),
   getPriceVolumeMatrix: (params?: DashboardParams) =>
     fetchApi<any[]>(`/api/products/analytics/price-volume-matrix${buildDateParams(params)}`),
+  getAllergenDistribution: () =>
+    fetchApi<any[]>("/api/products/analytics/allergen-distribution"),
+  getResistanceDistribution: () =>
+    fetchApi<any[]>("/api/products/analytics/resistance-distribution"),
+  getCategoryGrowth: (params?: DashboardParams) =>
+    fetchApi<any[]>(`/api/products/analytics/category-growth${buildDateParams(params)}`),
+  getQuantitySummary: (params?: DashboardParams) =>
+    fetchApi<any[]>(`/api/products/analytics/quantity-summary${buildDateParams(params)}`),
 };
 
 // ==========================================
@@ -121,6 +137,19 @@ export const customersApi = {
       `/api/customers/activity${query ? `?${query}` : ""}`
     );
   },
+  getByTransactions: (limit = 10, params?: DashboardParams) => {
+    const searchParams = new URLSearchParams();
+    searchParams.set("limit", String(limit));
+    if (params?.start_date) searchParams.set("start_date", params.start_date);
+    if (params?.end_date) searchParams.set("end_date", params.end_date);
+    return fetchApi<any[]>(`/api/customers/by-transactions?${searchParams.toString()}`);
+  },
+  getAvgBasketByCity: (params?: DashboardParams) =>
+    fetchApi<any[]>(`/api/customers/avg-basket-by-city${buildDateParams(params)}`),
+  getGrowthByCity: (params?: DashboardParams) =>
+    fetchApi<any[]>(`/api/customers/growth-by-city${buildDateParams(params)}`),
+  getLoyaltyStats: (params?: DashboardParams) =>
+    fetchApi<any>(`/api/customers/loyalty-stats${buildDateParams(params)}`),
   getById: (id: number) => fetchApi<any>(`/api/customers/${id}`),
 };
 
@@ -135,6 +164,16 @@ export const employeesApi = {
     fetchApi<any[]>(`/api/employees/performance/by-age${buildDateParams(params)}`),
   getPerformanceBySeniority: (params?: DashboardParams) =>
     fetchApi<any[]>(`/api/employees/performance/by-seniority${buildDateParams(params)}`),
+  getAgeCategoryDistribution: () =>
+    fetchApi<any[]>("/api/employees/demographics/age-category"),
+  getAgeTrancheDistribution: () =>
+    fetchApi<any[]>("/api/employees/demographics/age-tranche"),
+  getGenderDistribution: () =>
+    fetchApi<any[]>("/api/employees/demographics/gender"),
+  getCaByAgeTranche: (params?: DashboardParams) =>
+    fetchApi<any[]>(`/api/employees/ca-by-age-tranche${buildDateParams(params)}`),
+  getPerformanceTable: (params?: DashboardParams) =>
+    fetchApi<any[]>(`/api/employees/performance-table${buildDateParams(params)}`),
   getById: (id: number) => fetchApi<any>(`/api/employees/${id}`),
 };
 
@@ -155,4 +194,32 @@ export const basketApi = {
 
 export const filtersApi = {
   getOptions: () => fetchApi<any>("/api/filters/"),
+};
+
+// ==========================================
+// Insights API (advanced charts)
+// ==========================================
+
+export const insightsApi = {
+  getMonthlyByCategory: (params?: DashboardParams) =>
+    fetchApi<any[]>(`/api/insights/monthly-by-category${buildDateParams(params)}`),
+  getProfitSummary: (params?: DashboardParams) =>
+    fetchApi<any>(`/api/insights/profit-summary${buildDateParams(params)}`),
+  getCategoryWaterfall: (params?: DashboardParams) =>
+    fetchApi<any[]>(`/api/insights/category-waterfall${buildDateParams(params)}`),
+  getParetoProducts: (limit = 20, params?: DashboardParams) => {
+    const searchParams = new URLSearchParams();
+    searchParams.set("limit", String(limit));
+    if (params?.start_date) searchParams.set("start_date", params.start_date);
+    if (params?.end_date) searchParams.set("end_date", params.end_date);
+    return fetchApi<any[]>(`/api/insights/pareto-products?${searchParams.toString()}`);
+  },
+  getGrowthMetrics: (params?: DashboardParams) =>
+    fetchApi<any>(`/api/insights/growth-metrics${buildDateParams(params)}`),
+  getRevenueByDay: () => fetchApi<any[]>("/api/insights/revenue-by-day"),
+  getRevenueConcentration: () => fetchApi<any>("/api/insights/revenue-concentration"),
+  getMonthOverMonth: () => fetchApi<any[]>("/api/insights/month-over-month"),
+  getCustomerRfm: () => fetchApi<any[]>("/api/insights/customer-rfm"),
+  getGeographicDistribution: () => fetchApi<any[]>("/api/insights/geographic-distribution"),
+  getEmployeeRanking: () => fetchApi<any[]>("/api/insights/employee-ranking"),
 };

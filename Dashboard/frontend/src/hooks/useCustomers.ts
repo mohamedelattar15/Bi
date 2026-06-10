@@ -26,3 +26,35 @@ export function useCustomerActivity(params?: DashboardParams) {
     staleTime: 5 * 60 * 1000,
   });
 }
+
+export function useCustomersByTransactions(limit = 10, params?: DashboardParams) {
+  return useQuery({
+    queryKey: ["customers", "by-transactions", limit, params],
+    queryFn: () => customersApi.getByTransactions(limit, params),
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function useAvgBasketByCity(params?: DashboardParams) {
+  return useQuery({
+    queryKey: ["customers", "avg-basket-by-city", params],
+    queryFn: () => customersApi.getAvgBasketByCity(params),
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function useCustomerGrowthByCity(params?: DashboardParams) {
+  return useQuery({
+    queryKey: ["customers", "growth-by-city", params],
+    queryFn: () => customersApi.getGrowthByCity(params),
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function useCustomerLoyaltyStats(params?: DashboardParams) {
+  return useQuery({
+    queryKey: ["customers", "loyalty-stats", params],
+    queryFn: () => customersApi.getLoyaltyStats(params),
+    staleTime: 5 * 60 * 1000,
+  });
+}

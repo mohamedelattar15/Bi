@@ -27,3 +27,43 @@ export function useEmployeePerformanceBySeniority(dateParams?: DashboardParams) 
     staleTime: 10 * 60 * 1000,
   });
 }
+
+export function useEmployeeAgeCategory() {
+  return useQuery({
+    queryKey: ["employees", "demographics", "age-category"],
+    queryFn: () => employeesApi.getAgeCategoryDistribution(),
+    staleTime: 10 * 60 * 1000,
+  });
+}
+
+export function useEmployeeAgeTranche() {
+  return useQuery({
+    queryKey: ["employees", "demographics", "age-tranche"],
+    queryFn: () => employeesApi.getAgeTrancheDistribution(),
+    staleTime: 10 * 60 * 1000,
+  });
+}
+
+export function useEmployeeGender() {
+  return useQuery({
+    queryKey: ["employees", "demographics", "gender"],
+    queryFn: () => employeesApi.getGenderDistribution(),
+    staleTime: 10 * 60 * 1000,
+  });
+}
+
+export function useEmployeeCaByAgeTranche(dateParams?: DashboardParams) {
+  return useQuery({
+    queryKey: ["employees", "ca-by-age-tranche", dateParams],
+    queryFn: () => employeesApi.getCaByAgeTranche(dateParams),
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function useEmployeePerformanceTable(dateParams?: DashboardParams) {
+  return useQuery({
+    queryKey: ["employees", "performance-table", dateParams],
+    queryFn: () => employeesApi.getPerformanceTable(dateParams),
+    staleTime: 5 * 60 * 1000,
+  });
+}

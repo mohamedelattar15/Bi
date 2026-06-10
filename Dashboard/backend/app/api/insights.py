@@ -20,6 +20,8 @@ from app.schemas.analytics import (
     EmployeeParity,
     EmployeeRanking,
 )
+from pydantic import BaseModel
+from decimal import Decimal
 
 router = APIRouter(prefix="/api/insights", tags=["Insights"])
 
@@ -78,3 +80,133 @@ def get_employee_ranking(db: Session = Depends(get_db)):
     """Full employee ranking with all performance metrics."""
     repo = DashboardRepository(db)
     return repo.get_employee_ranking()
+
+
+# ── New advanced chart endpoints ──
+
+class MonthlyRevenueByCategory(BaseModel):
+    year: int
+    month: int
+    month_name: str
+    category: str
+    revenue: Decimal
+    quantity: int
+    transaction_count: int
+
+
+class ProfitSummary(BaseModel):
+    gross_revenue: Decimal
+    total_discounts: Decimal
+    total_orders: int
+    net_profit: Decimal
+    avg_profit_per_transaction: Decimal
+
+
+class CategoryWaterfall(BaseModel):
+    category: str
+    revenue: Decimal
+    quantity: int
+    transaction_count: int
+
+
+class ParetoProduct(BaseModel):
+    product_id: int
+    product_name: str
+    category: str
+    revenue: Decimal
+    quantity_sold: int
+    pct_of_total: Decimal
+    cumulative_pct: Decimal
+
+
+class GrowthMetrics(BaseModel):
+    total_revenue: Decimal
+    total_profit: Decimal
+    total_orders: int
+    total_discounts: Decimal
+    profit_margin_pct: Decimal
+    avg_profit_per_order: Decimal
+
+
+@router.get("/monthly-by-category", response_model=list[MonthlyRevenueByCategory])
+def get_monthly_revenue_by_category(
+    start_date: Optional[date] = Query(None),
+    end_date: Optional[date] = Query(None),
+    db: Session = Depends(get_db),
+):
+    """Monthly revenue by category (for Stacked Bar / Heatmap)."""
+    repo = DashboardRepository(db)
+    data = repo.get_monthly_revenue_by_category(start_date, end_date)
+    return [
+        MonthlyRevenueByCategory(
+            year=int(row['year']), month=int(row['month']),
+            month_name=row['month_name'], category=row['category'],
+            revenue=row['revenue'], quantity=int(row['quantity']),
+            transaction_count=int(row['transaction_count']),
+        )
+        for row in data
+    ]
+
+
+@router.get("/profit-summary", response_model=ProfitSummary)
+def get_profit_summary(
+    start_date: Optional[date] = Query(None),
+    end_date: Optional[date] = Query(None),
+    db: Session = Depends(get_db),
+):
+    """Gross revenue, discounts, net profit."""
+    repo = DashboardRepository(db)
+    data = repo.get_profit_summary(start_date, end_date)
+    return ProfitSummary(**data)
+
+
+@router.get("/category-waterfall", response_model=list[CategoryWaterfall])
+def get_category_waterfall(
+    start_date: Optional[date] = Query(None),
+    end_date: Optional[date] = Query(None),
+    db: Session = Depends(get_db),
+):
+    """Category contribution waterfall."""
+    repo = DashboardRepository(db)
+    data = repo.get_category_waterfall(start_date, end_date)
+    return [
+        CategoryWaterfall(
+            category=row['category'], revenue=row['revenue'],
+            quantity=int(row['quantity']), transaction_count=int(row['transaction_count']),
+        )
+        for row in data
+    ]
+
+
+@router.get("/pareto-products", response_model=list[ParetoProduct])
+def get_pareto_products(
+    limit: int = Query(20, ge=1, le=100),
+    start_date: Optional[date] = Query(None),
+    end_date: Optional[date] = Query(None),
+    db: Session = Depends(get_db),
+):
+    """Product revenue with cumulative % for Pareto chart."""
+    repo = DashboardRepository(db)
+    data = repo.get_top_product_pareto(limit, start_date, end_date)
+    return [
+        ParetoProduct(
+            product_id=int(row['productid']), product_name=row['productname'],
+            category=row['category'], revenue=row['revenue'],
+            quantity_sold=int(row['quantity_sold']),
+            pct_of_total=Decimal(str(row['pct_of_total'])),
+            cumulative_pct=Decimal(str(row['cumulative_pct'])),
+        )
+        for row in data
+    ]
+
+
+@router.get("/growth-metrics", response_model=GrowthMetrics)
+def get_growth_metrics(
+    start_date: Optional[date] = Query(None),
+    end_date: Optional[date] = Query(None),
+    db: Session = Depends(get_db),
+):
+    """Growth %, profit margin, and key financial metrics."""
+    repo = DashboardRepository(db)
+    data = repo.get_growth_metrics(start_date, end_date)
+    return GrowthMetrics(**data)

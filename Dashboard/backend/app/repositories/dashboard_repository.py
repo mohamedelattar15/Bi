@@ -435,13 +435,18 @@ class DashboardRepository:
                 SELECT SUM(revenue) AS grand_total FROM cat_rev
             )
             SELECT 
-                (SELECT COUNT(*) FROM cat_rev) AS category_count,
-                ROUND((SELECT MAX(revenue) / NULLIF(grand_total, 0) * 100 FROM cat_rev, total)::numeric, 2) AS top_category_pct,
-                (SELECT categoryname FROM cat_rev ORDER BY revenue DESC LIMIT 1) AS top_category,
-                ROUND((SELECT SUM(revenue * revenue) FROM cat_rev) / NULLIF((SELECT grand_total * grand_total FROM total), 0) * 10000::numeric, 2) AS herfindahl_index
-            FROM total
+                COALESCE((SELECT COUNT(*) FROM cat_rev), 0) AS category_count,
+                COALESCE(ROUND((SELECT MAX(revenue) / NULLIF((SELECT grand_total FROM total), 0) * 100 FROM cat_rev)::numeric, 2), 0) AS top_category_pct,
+                COALESCE((SELECT categoryname FROM cat_rev ORDER BY revenue DESC LIMIT 1), '') AS top_category,
+                COALESCE(ROUND((SELECT SUM(revenue * revenue) FROM cat_rev) / NULLIF((SELECT grand_total * grand_total FROM total), 0) * 10000::numeric, 2), 0) AS herfindahl_index
         """
-        return dict(self.db.execute(text(query)).first()._mapping)
+        result = self.db.execute(text(query)).first()
+        return dict(result._mapping) if result else {
+            "category_count": 0,
+            "top_category": "",
+            "top_category_pct": 0,
+            "herfindahl_index": 0,
+        }
 
     def get_revenue_by_day_of_week(self) -> list[dict]:
         """Revenue and transaction breakdown by day of week."""
@@ -630,4 +635,460 @@ class DashboardRepository:
             "countries": list(countries),
             "employees": list(employees),
             "date_range": date_range,
+        }
+
+    # ====================================================================
+    # PAGE 1: SALES - Additional queries
+    # ====================================================================
+
+    def get_sales_by_city(self, start_date=None, end_date=None) -> list[dict]:
+        """CA total by city (for Map visual)."""
+        query = """
+            SELECT c.city,
+                   COALESCE(SUM(m.total_revenue), 0) AS revenue,
+                   COALESCE(SUM(m.total_quantity), 0) AS quantity,
+                   COALESCE(SUM(m.transaction_count), 0) AS transaction_count
+            FROM mv_daily_sales m
+            JOIN dim_customer c ON m.customerid = c.customerid
+            WHERE 1=1
+        """
+        params = {}
+        query = self._apply_date_filter(query, params, start_date, end_date, table_alias="m")
+        query += " GROUP BY c.city ORDER BY revenue DESC"
+        result = self.db.execute(text(query), params)
+        return [dict(row._mapping) for row in result]
+
+    def get_sales_funnel_by_city(self, start_date=None, end_date=None) -> list[dict]:
+        """Funnel data: quantity by city."""
+        query = """
+            SELECT c.city,
+                   COALESCE(SUM(m.total_quantity), 0) AS quantity,
+                   COALESCE(SUM(m.total_revenue), 0) AS revenue
+            FROM mv_daily_sales m
+            JOIN dim_customer c ON m.customerid = c.customerid
+            WHERE 1=1
+        """
+        params = {}
+        query = self._apply_date_filter(query, params, start_date, end_date, table_alias="m")
+        query += " GROUP BY c.city ORDER BY quantity DESC"
+        result = self.db.execute(text(query), params)
+        return [dict(row._mapping) for row in result]
+
+    def get_ca_growth_by_year(self, start_date=None, end_date=None) -> list[dict]:
+        """CA Growth by year (for Area Chart)."""
+        query = """
+            SELECT d.year,
+                   COALESCE(SUM(m.total_revenue), 0) AS revenue,
+                   COALESCE(SUM(m.total_quantity), 0) AS quantity,
+                   COALESCE(SUM(m.transaction_count), 0) AS transaction_count
+            FROM mv_daily_sales m
+            JOIN dim_date d ON m.date = d.date_key
+            WHERE 1=1
+        """
+        params = {}
+        query = self._apply_date_filter(query, params, start_date, end_date, table_alias="m")
+        query += " GROUP BY d.year ORDER BY d.year"
+        result = self.db.execute(text(query), params)
+        rows = [dict(row._mapping) for row in result]
+        # Calculate growth
+        for i, row in enumerate(rows):
+            if i > 0 and rows[i-1]['revenue']:
+                row['growth'] = round((row['revenue'] - rows[i-1]['revenue']) / rows[i-1]['revenue'] * 100, 2)
+            else:
+                row['growth'] = None
+        return rows
+
+    def get_sales_by_class(self, start_date=None, end_date=None) -> list[dict]:
+        """CA total by product class (for Donut chart)."""
+        query = """
+            SELECT p.class,
+                   COALESCE(SUM(m.total_revenue), 0) AS revenue,
+                   COALESCE(SUM(m.total_quantity), 0) AS quantity
+            FROM mv_daily_sales m
+            JOIN dim_product p ON m.productid = p.productid
+            WHERE p.class IS NOT NULL AND 1=1
+        """
+        params = {}
+        query = self._apply_date_filter(query, params, start_date, end_date, table_alias="m")
+        query += " GROUP BY p.class ORDER BY revenue DESC"
+        result = self.db.execute(text(query), params)
+        return [dict(row._mapping) for row in result]
+
+    # ====================================================================
+    # PAGE 2: PRODUCTS - Additional queries
+    # ====================================================================
+
+    def get_products_by_allergen(self) -> list[dict]:
+        """Product count by allergen status (for Pie chart)."""
+        query = """
+            SELECT COALESCE(isallergic, 'Unknown') AS isallergic,
+                   COUNT(*) AS product_count
+            FROM dim_product
+            GROUP BY isallergic
+            ORDER BY product_count DESC
+        """
+        result = self.db.execute(text(query))
+        return [dict(row._mapping) for row in result]
+
+    def get_products_by_resistance(self) -> list[dict]:
+        """Product count by resistance level (for Pie chart)."""
+        query = """
+            SELECT COALESCE(resistant, 'Unknown') AS resistance,
+                   COUNT(*) AS product_count
+            FROM dim_product
+            GROUP BY resistant
+            ORDER BY product_count DESC
+        """
+        result = self.db.execute(text(query))
+        return [dict(row._mapping) for row in result]
+
+    def get_category_growth_rates(self, start_date=None, end_date=None) -> list[dict]:
+        """Growth rates (CA, Quantity, Transactions) by category."""
+        query = """
+            SELECT m.categoryname AS category,
+                   COALESCE(SUM(m.total_revenue), 0) AS revenue,
+                   COALESCE(SUM(m.total_quantity), 0) AS quantity,
+                   COALESCE(SUM(m.transaction_count), 0) AS transactions
+            FROM mv_daily_sales m
+            WHERE 1=1
+        """
+        params = {}
+        query = self._apply_date_filter(query, params, start_date, end_date, table_alias="m")
+        query += " GROUP BY m.categoryname ORDER BY revenue DESC"
+        result = self.db.execute(text(query), params)
+        rows = [dict(row._mapping) for row in result]
+        # Calculate growth vs total
+        total_rev = sum(r['revenue'] for r in rows) or 1
+        total_qty = sum(r['quantity'] for r in rows) or 1
+        total_txn = sum(r['transactions'] for r in rows) or 1
+        for row in rows:
+            row['ca_growth_pct'] = round((row['revenue'] / total_rev) * 100, 2)
+            row['quant_growth_pct'] = round((row['quantity'] / total_qty) * 100, 2)
+            row['transa_growth_pct'] = round((row['transactions'] / total_txn) * 100, 2)
+        return rows
+
+    def get_products_quantity_summary(self, start_date=None, end_date=None) -> list[dict]:
+        """Quantity sold by product (for Bar chart)."""
+        query = """
+            SELECT m.productid, m.productname, m.categoryname AS category,
+                   COALESCE(SUM(m.total_quantity), 0) AS total_quantity,
+                   COALESCE(SUM(m.total_revenue), 0) AS total_revenue
+            FROM mv_daily_sales m
+            WHERE 1=1
+        """
+        params = {}
+        query = self._apply_date_filter(query, params, start_date, end_date, table_alias="m")
+        query += " GROUP BY m.productid, m.productname, m.categoryname ORDER BY total_quantity DESC"
+        result = self.db.execute(text(query), params)
+        return [dict(row._mapping) for row in result]
+
+    # ====================================================================
+    # PAGE 3: CUSTOMERS - Additional queries
+    # ====================================================================
+
+    def get_customers_by_transactions(self, limit=10, start_date=None, end_date=None) -> list[dict]:
+        """Top customers by transaction count."""
+        query = """
+            SELECT c.customerid,
+                   c.full_name,
+                   c.city,
+                   c.country,
+                   COALESCE(SUM(m.transaction_count), 0) AS total_transactions,
+                   COALESCE(SUM(m.total_revenue), 0) AS total_revenue
+            FROM mv_daily_sales m
+            JOIN dim_customer c ON m.customerid = c.customerid
+            WHERE 1=1
+        """
+        params = {"limit": limit}
+        query = self._apply_date_filter(query, params, start_date, end_date, table_alias="m")
+        query += """
+            GROUP BY c.customerid, c.full_name, c.city, c.country
+            ORDER BY total_transactions DESC
+            LIMIT :limit
+        """
+        result = self.db.execute(text(query), params)
+        return [dict(row._mapping) for row in result]
+
+    def get_customers_avg_basket_by_city(self, start_date=None, end_date=None) -> list[dict]:
+        """Average basket by city (for Map visual)."""
+        query = """
+            SELECT c.city,
+                   COUNT(DISTINCT m.customerid) AS customer_count,
+                   COALESCE(SUM(m.total_revenue), 0) AS total_revenue,
+                   COALESCE(SUM(m.total_revenue) / NULLIF(SUM(m.transaction_count), 0), 0) AS avg_basket,
+                   COALESCE(SUM(m.transaction_count), 0) AS total_transactions
+            FROM mv_daily_sales m
+            JOIN dim_customer c ON m.customerid = c.customerid
+            WHERE 1=1
+        """
+        params = {}
+        query = self._apply_date_filter(query, params, start_date, end_date, table_alias="m")
+        query += " GROUP BY c.city ORDER BY total_revenue DESC"
+        result = self.db.execute(text(query), params)
+        return [dict(row._mapping) for row in result]
+
+    def get_customer_growth_by_city(self, start_date=None, end_date=None) -> list[dict]:
+        """Growth metrics by city (for Pivot Table)."""
+        query = """
+            SELECT c.city,
+                   COALESCE(SUM(m.total_revenue), 0) AS revenue,
+                   COALESCE(SUM(m.transaction_count), 0) AS transactions,
+                   COALESCE(SUM(m.total_quantity), 0) AS quantity,
+                   COUNT(DISTINCT m.customerid) AS customer_count
+            FROM mv_daily_sales m
+            JOIN dim_customer c ON m.customerid = c.customerid
+            WHERE 1=1
+        """
+        params = {}
+        query = self._apply_date_filter(query, params, start_date, end_date, table_alias="m")
+        query += " GROUP BY c.city ORDER BY revenue DESC"
+        result = self.db.execute(text(query), params)
+        rows = [dict(row._mapping) for row in result]
+        total_rev = sum(r['revenue'] for r in rows) or 1
+        total_txn = sum(r['transactions'] for r in rows) or 1
+        total_qty = sum(r['quantity'] for r in rows) or 1
+        for row in rows:
+            row['ca_growth_pct'] = round((row['revenue'] / total_rev) * 100, 2)
+            row['transa_growth_pct'] = round((row['transactions'] / total_txn) * 100, 2)
+            row['quant_growth_pct'] = round((row['quantity'] / total_qty) * 100, 2)
+        return rows
+
+    def get_customer_loyalty_stats(self, start_date=None, end_date=None) -> dict:
+        """Customer loyalty, frequency, and re-purchase rates."""
+        query = """
+            SELECT 
+                COUNT(DISTINCT customerid) AS total_customers,
+                COUNT(DISTINCT CASE WHEN transaction_count > 0 THEN customerid END) AS active_customers,
+                COALESCE(SUM(total_revenue) / NULLIF(COUNT(DISTINCT customerid), 0), 0) AS ltv
+            FROM mv_daily_sales
+            WHERE 1=1
+        """
+        params = {}
+        query = self._apply_date_filter(query, params, start_date, end_date, table_alias="mv_daily_sales")
+        result = self.db.execute(text(query), params)
+        stats = dict(result.first()._mapping)
+        
+        # Frequency and re-purchase rate from fact_sales
+        freq_query = """
+            SELECT 
+                COUNT(DISTINCT transactionnumber) / NULLIF(COUNT(DISTINCT customerid), 0) AS avg_frequency,
+                COUNT(DISTINCT customerid) FILTER (WHERE customerid IN (
+                    SELECT customerid FROM fact_sales GROUP BY customerid HAVING COUNT(DISTINCT transactionnumber) > 1
+                ))::NUMERIC / NULLIF(COUNT(DISTINCT customerid), 0) * 100 AS repurchase_rate
+            FROM fact_sales
+            WHERE 1=1
+        """
+        freq_params = {}
+        freq_query = self._apply_date_filter(freq_query, freq_params, start_date, end_date, table_alias="fact_sales")
+        freq_result = self.db.execute(text(freq_query), freq_params).first()
+        
+        stats['avg_frequency'] = freq_result[0] if freq_result else 0
+        stats['repurchase_rate'] = freq_result[1] if freq_result else 0
+        return stats
+
+    # ====================================================================
+    # PAGE 4: EMPLOYEES - Additional queries
+    # ====================================================================
+
+    def get_employee_age_category_distribution(self) -> list[dict]:
+        """Employee count by age category (for Donut chart)."""
+        query = """
+            SELECT 
+                CASE 
+                    WHEN EXTRACT(YEAR FROM age(CURRENT_DATE, birthdate)) < 30 THEN 'Young'
+                    WHEN EXTRACT(YEAR FROM age(CURRENT_DATE, birthdate)) BETWEEN 30 AND 45 THEN 'Middle'
+                    ELSE 'Senior'
+                END AS age_category,
+                COUNT(*) AS employee_count
+            FROM dim_employee
+            GROUP BY age_category
+            ORDER BY employee_count DESC
+        """
+        result = self.db.execute(text(query))
+        return [dict(row._mapping) for row in result]
+
+    def get_employee_age_tranche_distribution(self) -> list[dict]:
+        """Employee count by detailed age tranche (for Pie chart)."""
+        query = """
+            SELECT 
+                CASE 
+                    WHEN EXTRACT(YEAR FROM age(CURRENT_DATE, birthdate)) < 25 THEN 'Under 25'
+                    WHEN EXTRACT(YEAR FROM age(CURRENT_DATE, birthdate)) BETWEEN 25 AND 34 THEN '25-34'
+                    WHEN EXTRACT(YEAR FROM age(CURRENT_DATE, birthdate)) BETWEEN 35 AND 44 THEN '35-44'
+                    WHEN EXTRACT(YEAR FROM age(CURRENT_DATE, birthdate)) BETWEEN 45 AND 54 THEN '45-54'
+                    ELSE '55+'
+                END AS age_tranche,
+                COUNT(*) AS employee_count
+            FROM dim_employee
+            GROUP BY age_tranche
+            ORDER BY age_tranche
+        """
+        result = self.db.execute(text(query))
+        return [dict(row._mapping) for row in result]
+
+    def get_employee_gender_distribution(self) -> list[dict]:
+        """Employee count by gender (for Donut chart)."""
+        query = """
+            SELECT COALESCE(gender, 'Unknown') AS gender,
+                   COUNT(*) AS employee_count
+            FROM dim_employee
+            GROUP BY gender
+            ORDER BY employee_count DESC
+        """
+        result = self.db.execute(text(query))
+        return [dict(row._mapping) for row in result]
+
+    def get_employee_ca_by_age_tranche(self, start_date=None, end_date=None) -> list[dict]:
+        """CA total by age tranche (for Bar chart)."""
+        query = """
+            SELECT 
+                CASE 
+                    WHEN EXTRACT(YEAR FROM age(CURRENT_DATE, e.birthdate)) < 25 THEN 'Under 25'
+                    WHEN EXTRACT(YEAR FROM age(CURRENT_DATE, e.birthdate)) BETWEEN 25 AND 34 THEN '25-34'
+                    WHEN EXTRACT(YEAR FROM age(CURRENT_DATE, e.birthdate)) BETWEEN 35 AND 44 THEN '35-44'
+                    WHEN EXTRACT(YEAR FROM age(CURRENT_DATE, e.birthdate)) BETWEEN 45 AND 54 THEN '45-54'
+                    ELSE '55+'
+                END AS age_tranche,
+                COUNT(DISTINCT e.employeeid) AS employee_count,
+                COALESCE(SUM(m.total_revenue), 0) AS total_revenue
+            FROM dim_employee e
+            LEFT JOIN mv_daily_sales m ON e.employeeid = m.employeeid
+            WHERE 1=1
+        """
+        params = {}
+        query = self._apply_date_filter(query, params, start_date, end_date, table_alias="m")
+        query += " GROUP BY age_tranche ORDER BY age_tranche"
+        result = self.db.execute(text(query), params)
+        return [dict(row._mapping) for row in result]
+
+    def get_employee_performance_table(self, start_date=None, end_date=None) -> list[dict]:
+        """Employee performance table with CA total and growth."""
+        query = """
+            SELECT e.employeeid, e.full_name AS full_name_emp, e.gender,
+                   COALESCE(SUM(m.total_revenue), 0) AS total_revenue
+            FROM dim_employee e
+            LEFT JOIN mv_daily_sales m ON e.employeeid = m.employeeid
+            WHERE 1=1
+        """
+        params = {}
+        query = self._apply_date_filter(query, params, start_date, end_date, table_alias="m")
+        query += " GROUP BY e.employeeid, e.full_name, e.gender ORDER BY total_revenue DESC"
+        result = self.db.execute(text(query), params)
+        rows = [dict(row._mapping) for row in result]
+        # Calculate growth vs average
+        avg_rev = sum(r['total_revenue'] for r in rows) / len(rows) if rows else 1
+        for row in rows:
+            row['ca_growth'] = round((row['total_revenue'] - avg_rev) / avg_rev * 100, 2) if avg_rev else 0
+        return rows
+
+    # ====================================================================
+    # PAGE 5: BASKET - Additional queries
+    # ====================================================================
+
+    def get_basket_total_products(self) -> int:
+        """Total distinct products available for basket analysis."""
+        return self.db.execute(
+            text("SELECT COUNT(DISTINCT productname) FROM dim_product")
+        ).scalar() or 0
+
+    # ====================================================================
+    # ADVANCED CHARTS - New repository methods
+    # ====================================================================
+
+    def get_monthly_revenue_by_category(self, start_date=None, end_date=None) -> list[dict]:
+        """Monthly revenue broken down by category (for Stacked Bar / Heatmap)."""
+        query = """
+            SELECT d.year, d.month, d.month_name,
+                   m.categoryname AS category,
+                   COALESCE(SUM(m.total_revenue), 0) AS revenue,
+                   COALESCE(SUM(m.total_quantity), 0) AS quantity,
+                   COALESCE(SUM(m.transaction_count), 0) AS transaction_count
+            FROM mv_daily_sales m
+            JOIN dim_date d ON m.date = d.date_key
+            WHERE 1=1
+        """
+        params = {}
+        query = self._apply_date_filter(query, params, start_date, end_date, table_alias="m")
+        query += """
+            GROUP BY d.year, d.month, d.month_name, m.categoryname
+            ORDER BY d.year, d.month, m.categoryname
+        """
+        result = self.db.execute(text(query), params)
+        return [dict(row._mapping) for row in result]
+
+    def get_profit_summary(self, start_date=None, end_date=None) -> dict:
+        """Profit = SUM(qty × price) - discount. Returns profit metrics."""
+        query = """
+            SELECT 
+                COALESCE(SUM(s.quantity * p.price), 0) AS gross_revenue,
+                COALESCE(SUM(s.discount), 0) AS total_discounts,
+                COUNT(DISTINCT s.transactionnumber) AS total_orders,
+                COALESCE(SUM(s.quantity * p.price) - COALESCE(SUM(s.discount), 0), 0) AS net_profit,
+                AVG(s.quantity * p.price - COALESCE(s.discount, 0)) AS avg_profit_per_transaction
+            FROM fact_sales s
+            JOIN dim_product p ON s.productid = p.productid
+            WHERE 1=1
+        """
+        params = {}
+        query = self._apply_date_filter(query, params, start_date, end_date, table_alias="s")
+        result = self.db.execute(text(query), params)
+        return dict(result.first()._mapping)
+
+    def get_category_waterfall(self, start_date=None, end_date=None) -> list[dict]:
+        """Category contribution in waterfall format (largest → smallest)."""
+        query = """
+            SELECT categoryname AS category,
+                   COALESCE(SUM(total_revenue), 0) AS revenue,
+                   COALESCE(SUM(total_quantity), 0) AS quantity,
+                   COALESCE(SUM(transaction_count), 0) AS transaction_count
+            FROM mv_daily_sales
+            WHERE 1=1
+        """
+        params = {}
+        query = self._apply_date_filter(query, params, start_date, end_date, table_alias="mv_daily_sales")
+        query += " GROUP BY categoryname ORDER BY revenue DESC"
+        result = self.db.execute(text(query), params)
+        return [dict(row._mapping) for row in result]
+
+    def get_top_product_pareto(self, limit=20, start_date=None, end_date=None) -> list[dict]:
+        """Product revenue with cumulative percentage (for Pareto chart)."""
+        query = """
+            SELECT m.productid, m.productname, m.categoryname AS category,
+                   COALESCE(SUM(m.total_revenue), 0) AS revenue,
+                   COALESCE(SUM(m.total_quantity), 0) AS quantity_sold
+            FROM mv_daily_sales m
+            WHERE 1=1
+        """
+        params = {"limit": limit}
+        query = self._apply_date_filter(query, params, start_date, end_date, table_alias="m")
+        query += """
+            GROUP BY m.productid, m.productname, m.categoryname
+            ORDER BY revenue DESC
+            LIMIT :limit
+        """
+        result = self.db.execute(text(query), params)
+        rows = [dict(row._mapping) for row in result]
+        total = sum(r['revenue'] for r in rows) or 1
+        cumulative = 0
+        for row in rows:
+            cumulative += row['revenue']
+            row['cumulative_pct'] = round(cumulative / total * 100, 2)
+            row['pct_of_total'] = round(row['revenue'] / total * 100, 2)
+        return rows
+
+    def get_growth_metrics(self, start_date=None, end_date=None) -> dict:
+        """Growth % and profit margin."""
+        profit = self.get_profit_summary(start_date, end_date)
+        kpis = self.get_all_kpis(start_date, end_date)
+        return {
+            "total_revenue": kpis["total_revenue"],
+            "total_profit": profit["net_profit"],
+            "total_orders": profit["total_orders"],
+            "total_discounts": profit["total_discounts"],
+            "profit_margin_pct": round(
+                (profit["net_profit"] / kpis["total_revenue"] * 100) if kpis["total_revenue"] else 0, 2
+            ),
+            "avg_profit_per_order": round(
+                (profit["net_profit"] / profit["total_orders"]) if profit["total_orders"] else 0, 2
+            ),
         }
