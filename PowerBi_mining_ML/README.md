@@ -1,344 +1,503 @@
-# 🛒 BI Project — Grocery Sales & Analysis
+# Grocery Sales BI, Data Mining, and Machine Learning Project
 
-## 📋 Table des matières
+This project is an end-to-end Business Intelligence and analytics solution for a grocery sales dataset. It combines data preprocessing, data warehouse modeling, Apache Hop ETL pipelines, Power BI dashboards, market basket analysis, and machine learning models for sales forecasting.
 
-1. [Aperçu](#aperçu)
-2. [Structure du projet](#structure-du-projet)
-3. [Schéma de la base de données](#schéma-de-la-base-de-données)
-4. [Fichiers & Ressources](#fichiers--ressources)
-5. [Pipelines & Processus](#pipelines--processus)
-6. [Analyses & Techniques](#analyses--techniques)
-7. [Guide de démarrage](#guide-de-démarrage)
-8. [Prérequis](#prérequis)
-9. [Contribuer](#contribuer)
+The goal is to transform raw grocery transaction data into business-ready insights: sales performance, product performance, customer behavior, employee performance, product associations, and revenue forecasts.
 
----
+## Table of Contents
 
-## Aperçu
+1. [Project Overview](#project-overview)
+2. [Main Objectives](#main-objectives)
+3. [Repository Structure](#repository-structure)
+4. [Dataset](#dataset)
+5. [Data Model](#data-model)
+6. [ETL Pipeline](#etl-pipeline)
+7. [Power BI Dashboards](#power-bi-dashboards)
+8. [Basket Analysis](#basket-analysis)
+9. [Machine Learning Forecasting](#machine-learning-forecasting)
+10. [Screenshots](#screenshots)
+11. [Getting Started](#getting-started)
+12. [Recommended Workflow](#recommended-workflow)
+13. [Technologies Used](#technologies-used)
+14. [Troubleshooting](#troubleshooting)
+15. [Future Improvements](#future-improvements)
 
-Le **Projet BI — Grocery Sales** est un environnement d'analyse décisionnel complet combinant :
+## Project Overview
 
-- **Base de données relationnelle** : schéma normalisé avec transactions, clients, produits, géographie.
-- **Données dénormalisées** : fichiers CSV enrichis pour analyses directes.
-- **Pipelines ETL** : Apache Hop pour extraire, transformer et charger les dimensions.
-- **Techniques de Data Mining** : Basket Analysis et Market Basket analysis (apriori, règles d'association).
+The project follows a complete analytics pipeline:
 
-Idéal pour data analysts, data scientists et BI practitioners visant à explorer les tendances de ventes, comportements clients et insights métier.
-
----
-
-## Structure du projet
-
-```
-bi/
-├── README.md                                    # Ce fichier (documentation principale)
-├── Basket_analysis_mining.md                    # Guide complet : Market Basket Analysis + DAX
-├── Basket_analysis_mining_README.md             # (si créé) Documentation technique
-├── Dimension_Pipline.hpl                        # Pipeline Apache Hop (dimension loading)
-├── Dimension_Pipline_README.md                  # Documentation : exécution & variables
-├── grocery_sales_denormalized.csv               # Dataset dénormalisé (>50MB)
-├── grocery_sales_denormalized_README.md         # Documentation : colonnes & nettoyage
-├── groceries_long.csv                           # Dataset alternatif (format long)
-├── SQL_Scripts.txt                              # Scripts SQL utiles
-├── work.md                                      # Notes de travail / journal
-└── Images/                                     # Captures d'écran dashboards & pipeline
+```text
+Raw grocery data
+    -> Data cleaning and preprocessing
+    -> Denormalized analytical dataset
+    -> Apache Hop ETL pipeline
+    -> PostgreSQL star schema
+    -> Power BI dashboards
+    -> Basket analysis and forecasting models
 ```
 
----
+It is designed for BI practice, data mining experiments, and machine learning forecasting on grocery retail data.
 
-## Captures d'écran
+## Main Objectives
 
-### Dashboards Power BI
+- Build a clean analytical dataset from grocery sales data.
+- Create a star schema suitable for reporting and dashboarding.
+- Load dimensions and facts into PostgreSQL using Apache Hop.
+- Design Power BI dashboards for sales, products, customers, employees, and basket analysis.
+- Apply market basket analysis to discover products frequently purchased together.
+- Build and compare forecasting models for revenue prediction.
+- Provide clear documentation for reproducing and extending the project.
 
-Voici les dashboards Power BI présents dans le projet :
+## Repository Structure
 
-- `Images/Capture d'écran 2026-06-03 020525.png` — Dashboard Sales
-- `Images/Capture d'écran 2026-06-03 020535.png` — Dashboard Product
-- `Images/Capture d'écran 2026-06-03 020543.png` — Dashboard Customer
-- `Images/Capture d'écran 2026-06-03 020549.png` — Dashboard Employee
-- `Images/Capture d'écran 2026-06-03 020602.png` — Dashboard Basket Analysis
-
-![Sales Dashboard](Images/Capture%20d'écran%202026-06-03%20020525.png)
-
-![Product Dashboard](Images/Capture%20d'écran%202026-06-03%20020535.png)
-
-![Customer Dashboard](Images/Capture%20d'écran%202026-06-03%20020543.png)
-
-![Employee Dashboard](Images/Capture%20d'écran%202026-06-03%20020549.png)
-
-![Basket Analysis Dashboard](Images/Capture%20d'écran%202026-06-03%20020602.png)
-
-### Pipeline Apache Hop
-
-Capture du pipeline Apache Hop utilisé pour charger les dimensions et préparer les données.
-
-![Pipeline Apache Hop](Images/Capture%20d'écran%202026-06-03%20012115.png)
-
-## Schéma de la base de données
-
-### Vue d'ensemble
-
-The **Grocery Sales Database** is a structured relational dataset designed for analyzing sales transactions, customer demographics, product details, employee records, and geographical information across multiple cities and countries. This dataset is ideal for data analysts, data scientists, and machine learning practitioners looking to explore sales trends, customer behaviors, and business insights.
-
-## Database Schema
-![Database Schema](Capture%20d'écran%202026-05-15%20162014.png)
-
-The dataset consists of seven interconnected tables:
-
-| File Name | Description |
-| :--- | :--- |
-| `categories.csv` | Defines the categories of the products. |
-| `cities.csv` | Contains city-level geographic data. |
-| `countries.csv` | Stores country-related metadata. |
-| `customers.csv` | Contains information about the customers who make purchases. |
-| `employees.csv` | Stores details of employees handling sales transactions. |
-| `products.csv` | Stores details about the products being sold. |
-| `sales.csv` | Contains transactional data for each sale. |
-
-## Table Descriptions
-
-### 1. categories
-| Key | Column Name | Data Type | Description |
-| :--- | :--- | :--- | :--- |
-| **PK** | `CategoryID` | INT | Unique identifier for each product category. |
-| | `CategoryName` | VARCHAR(45) | Name of the product category. |
-
-### 2. cities
-| Key | Column Name | Data Type | Description |
-| :--- | :--- | :--- | :--- |
-| **PK** | `CityID` | INT | Unique identifier for each city. |
-| | `CityName` | VARCHAR(45) | Name of the city. |
-| | `Zipcode` | DECIMAL(5,0) | Population of the city. |
-| **FK** | `CountryID` | INT | Reference to the corresponding country. |
-
-### 3. countries
-| Key | Column Name | Data Type | Description |
-| :--- | :--- | :--- | :--- |
-| **PK** | `CountryID` | INT | Unique identifier for each country. |
-| | `CountryName` | VARCHAR(45) | Name of the country. |
-| | `CountryCode` | VARCHAR(2) | Two-letter country code. |
-
-### 4. customers
-| Key | Column Name | Data Type | Description |
-| :--- | :--- | :--- | :--- |
-| **PK** | `CustomerID` | INT | Unique identifier for each customer. |
-| | `FirstName` | VARCHAR(45) | First name of the customer. |
-| | `MiddleInitial` | VARCHAR(1) | Middle initial of the customer. |
-| | `LastName` | VARCHAR(45) | Last name of the customer. |
-| **FK** | `cityID` | INT | City of the customer. |
-| | `Address` | VARCHAR(90) | Residential address of the customer. |
-
-### 5. employees
-| Key | Column Name | Data Type | Description |
-| :--- | :--- | :--- | :--- |
-| **PK** | `EmployeeID` | INT | Unique identifier for each employee. |
-| | `FirstName` | VARCHAR(45) | First name of the employee. |
-| | `MiddleInitial` | VARCHAR(1) | Middle initial of the employee. |
-| | `LastName` | VARCHAR(45) | Last name of the employee. |
-| | `BirthDate` | DATE | Date of birth of the employee. |
-| | `Gender` | VARCHAR(10) | Gender of the employee. |
-| **FK** | `CityID` | INT | Unique identifier for city. |
-| | `HireDate` | DATE | Date when the employee was hired. |
-
-### 6. products
-| Key | Column Name | Data Type | Description |
-| :--- | :--- | :--- | :--- |
-| **PK** | `ProductID` | INT | Unique identifier for each product. |
-| | `ProductName` | VARCHAR(45) | Name of the product. |
-| | `Price` | DECIMAL(4,0) | Price per unit of the product. |
-| | `CategoryID` | INT | Unique category identifier. |
-| | `Class` | VARCHAR(15) | Classification of the product. |
-| | `ModifyDate` | DATE | Last modified date. |
-| | `Resistant` | VARCHAR(15) | Product resistance category. |
-| | `IsAllergic` | VARCHAR | Indicates whether the item is an allergen. |
-| | `VitalityDays` | DECIMAL(3,0) | Product vital type classification. |
-
-### 7. sales
-| Key | Column Name | Data Type | Description |
-| :--- | :--- | :--- | :--- |
-| **PK** | `SalesID` | INT | Unique identifier for each sale. |
-| **FK** | `SalesPersonID` | INT | Employee responsible for the sale. |
-| **FK** | `CustomerID` | INT | Customer making the purchase. |
-| **FK** | `ProductID` | INT | Product being sold. |
-| | `Quantity` | INT | Number of units sold. |
-| | `Discount` | DECIMAL(10,2) | Discount applied to the sale. |
-| | `TotalPrice` | DECIMAL(10,2) | Final sale price after discounts. |
-| | `SalesDate` | DATETIME | Date and time of the sale. |
-| | `TransactionNumber` | VARCHAR(25) | Unique identifier for the transaction. |
-
-## Use Cases
-Despite being a four-month snapshot and existing independently of external data sources, this dataset offers a rich environment for aspiring data scientists to practice and enhance their SQL skills.
-
-### 1. Monthly Sales Performance
-*   **Objective:** Analyze sales performance within the four-month period to identify trends and patterns.
-*   **Tasks:**
-    *   Calculate total sales for each month.
-    *   Compare sales performance across different product categories each month.
-
-### 2. Top Products Identification
-*   **Objective:** Determine which products are the best and worst performers within the dataset timeframe.
-*   **Tasks:**
-    *   Rank products based on total sales revenue.
-    *   Analyze sales quantity and revenue to identify high-demand products.
-    *   Examine the impact of product classifications on sales performance.
-
-### 3. Customer Purchase Behavior
-*   **Objective:** Understand how customers interact with products during the four-month period.
-*   **Tasks:**
-    *   Segment customers based on their purchase frequency and total spend.
-    *   Identify repeat customers versus one-time buyers.
-    *   Analyze average order value and basket size.
-
-### 4. Salesperson Effectiveness
-*   **Objective:** Evaluate the performance of sales personnel in driving sales.
-*   **Tasks:**
-    *   Calculate total sales attributed to each salesperson.
-    *   Identify top-performing and underperforming sales staff.
-    *   Analyze sales trends based on individual salesperson contributions over time.
-
-### 5. Geographical Sales Insights
-*   **Objective:** Explore how sales are distributed across different cities and countries within the dataset.
-*   **Tasks:**
-    *   Map sales data to specific cities and countries to identify high-performing regions.
-    *   Compare sales volumes between various geographical areas.
-    *   Assess the effectiveness of regional sales strategies.
-
-## Data Relationships
-*   **Sales:** Each sale is linked to a Product, Customer, and Employee through their respective IDs. Each sale is linked to a location via the customer.
-*   **Customers:** Associated with a City and a Country to provide geographic context.
-*   **Employees:** Manage sales and are uniquely identified by `EmployeeID`.
-*   **Products:** Categorized under specific Categories to organize the inventory.
-*   **Geography:** Cities belong to Countries, offering higher-level geographic segmentation.
-
----
-
-## 📁 Fichiers & Ressources
-
-| Fichier | Type | Description |
-|---------|------|-------------|
-| [Basket_analysis_mining.md](Basket_analysis_mining.md) | 📊 Guide | Techniques Market Basket Analysis + formules Support/Confidence/Lift + code DAX |
-| [Dimension_Pipline.hpl](Dimension_Pipline.hpl) | 🔄 Pipeline | Pipeline Apache Hop pour chargement dimensions |
-| [Dimension_Pipline_README.md](Dimension_Pipline_README.md) | 📖 Documentation | Instructions exécution pipeline Hop (GUI, CLI, variables) |
-| [grocery_sales_denormalized.csv](grocery_sales_denormalized.csv) | 📈 Dataset | Données dénormalisées (~50MB+) : une ligne par article de panier |
-| [grocery_sales_denormalized_README.md](grocery_sales_denormalized_README.md) | 📖 Documentation | Colonnes, encodage, nettoyage, exemples pandas/SQL |
-| [groceries_long.csv](groceries_long.csv) | 📈 Dataset | Format long alternatif |
-| [SQL_Scripts.txt](SQL_Scripts.txt) | 💾 Scripts | Requêtes SQL utiles |
-| [work.md](work.md) | 📝 Notes | Journal & notes de travail |
-
----
-
-## 🔄 Pipelines & Processus
-
-### 1. Dimension Pipeline (Apache Hop)
-
-La pipeline `Dimension_Pipline.hpl` automatise :
-- ✅ Extraction des sources (CSV, base de données)
-- ✅ Nettoyage & normalisation
-- ✅ Enrichissements & transformations
-- ✅ Chargement vers tables de dimension
-
-**Lancer :** voir [Dimension_Pipline_README.md](Dimension_Pipline_README.md)
-
-### 2. Données Dénormalisées
-
-Le fichier `grocery_sales_denormalized.csv` contient toutes les ventes avec détails complets :
-- `id_transaction`, `product_id`, `productname`
-- `quantity`, `unit_price`, `total_price`
-- `transaction_date`, `category`, etc.
-
-**Utiliser :** voir [grocery_sales_denormalized_README.md](grocery_sales_denormalized_README.md)
-
----
-
-## 📊 Analyses & Techniques
-
-### Market Basket Analysis (Panier de consommation)
-
-Identifier les produits fréquemment achetés ensemble : utiliser apriori ou association rules.
-
-**Métriques clés :**
-- **Support** = P(X ∧ Y)
-- **Confidence** = P(Y|X)
-- **Lift** = Confidence / P(Y)
-
-**Implémentation :** DAX (Power BI/Tabular) ou Python (mlxtend, apyori)
-
-→ Consultez [Basket_analysis_mining.md](Basket_analysis_mining.md) pour formules + code DAX complet.
-
-### Cas d'usage
-
-1. **Performance mensuelle** — Analyser tendances ventes par mois/catégorie
-2. **Produits vedettes** — Classer produits par revenu et volume
-3. **Comportement clients** — Segmenter (RFM, fréquence, panier moyen)
-4. **Efficacité vendeurs** — Évaluer contribution par vendeur
-5. **Insights géographiques** — Comparer villes/pays
-
----
-
-## 🚀 Guide de démarrage
-
-### 1. Charger les données
-
-**Pour Power BI / Analyse Services :**
-```
-Importer grocery_sales_denormalized.csv → Transformer → Charger modèle
+```text
+PowerBi_mining_ML/
+├── README.md
+├── data.txt
+├── Images/
+│   ├── Amazon Background.jpg
+│   ├── Capture d'écran 2026-06-03 012115.png
+│   ├── Capture d'écran 2026-06-03 020525.png
+│   ├── Capture d'écran 2026-06-03 020535.png
+│   ├── Capture d'écran 2026-06-03 020543.png
+│   ├── Capture d'écran 2026-06-03 020549.png
+│   └── Capture d'écran 2026-06-03 020602.png
+├── Data_Preprocessing/
+│   ├── grocery_sales_fusion.ipynb
+│   └── pythone_chnage.ipynb
+├── Apache HOP/
+│   ├── Dimension_Pipline.hpl
+│   ├── Dimension_Pipline_README.md
+│   ├── grocery_sales_denormalized_README.md
+│   ├── SQL_Scripts.txt
+│   └── work.md
+├── Power bi/
+│   ├── powerbi.md
+│   └── Basket_analysis_mining.md
+└── AI/
+    ├── grocery_forecasting_v3.ipynb
+    └── models/
+        ├── 01_Preprocessing.ipynb
+        ├── 02_HoltWinters.ipynb
+        ├── 03_XGBoost.ipynb
+        ├── 04_RandomForest.ipynb
+        ├── 05_Ensemble_Comparaison.ipynb
+        └── 06_Forecast_2023.ipynb
 ```
 
-**Pour base SQL :**
-```sql
-LOAD DATA INFILE 'grocery_sales_denormalized.csv' 
-INTO TABLE sales_raw 
-FIELDS TERMINATED BY ',' ENCLOSED BY '"' 
-LINES TERMINATED BY '\n' 
-IGNORE 1 ROWS;
+> Note: Some screenshot file names contain accented characters on disk. If an image does not display in a Markdown viewer, open it directly from the `Images/` folder.
+
+## Dataset
+
+The project uses the Grocery Sales dataset from Kaggle:
+
+```text
+https://www.kaggle.com/datasets/andrexibiza/grocery-sales-dataset
 ```
 
-### 2. Exécuter la pipeline Dimension
+The original dataset contains relational sales data with products, categories, customers, employees, cities, countries, and sales transactions.
+
+Expected raw tables:
+
+| Table | Description |
+| --- | --- |
+| `categories` | Product category reference table. |
+| `products` | Product details, price, class, allergy flag, resistance, vitality days, and category. |
+| `customers` | Customer identity and address data. |
+| `employees` | Employee identity, birth date, gender, hire date, and location. |
+| `cities` | City-level geographic information. |
+| `countries` | Country reference data. |
+| `sales` | Transaction-level sales facts. |
+
+The project also uses a denormalized sales file for easier analysis and ETL loading. More details are available in [grocery_sales_denormalized_README.md](<Apache HOP/grocery_sales_denormalized_README.md>).
+
+## Data Model
+
+The reporting model is a star schema composed of four dimensions and one fact table.
+
+### Dimension Tables
+
+| Table | Grain | Main Fields |
+| --- | --- | --- |
+| `dim_category` | One row per category | `categoryid`, `categoryname` |
+| `dim_product` | One row per product | `productid`, `productname`, `price`, `categoryid`, `class`, `resistant`, `isallergic`, `vitalitydays` |
+| `dim_customer` | One row per customer | `customerid`, customer name, address, city, country |
+| `dim_employee` | One row per employee | `employeeid`, employee name, birth date, gender, hire date, city |
+
+### Fact Table
+
+| Table | Grain | Main Fields |
+| --- | --- | --- |
+| `fact_sales` | One row per sale line | `salesid`, `employeeid`, `customerid`, `productid`, `date`, `quantity`, `discount`, `totalprice`, `transactionnumber`, `time` |
+
+The SQL script for creating the warehouse tables is available in [SQL_Scripts.txt](<Apache HOP/SQL_Scripts.txt>).
+
+## ETL Pipeline
+
+The Apache Hop pipeline loads the denormalized grocery sales file into the star schema.
+
+Pipeline file:
+
+```text
+Apache HOP/Dimension_Pipline.hpl
+```
+
+Detailed documentation:
+
+[Dimension_Pipline_README.md](<Apache HOP/Dimension_Pipline_README.md>)
+
+Pipeline branches:
+
+```text
+CSV file input
+├── Sort rows -> Unique rows -> Select values -> Table output -> dim_category
+├── Sort rows -> Unique rows -> Select values -> Table output -> dim_product
+├── Sort rows -> Unique rows -> Select values -> Table output -> dim_customer
+├── Sort rows -> Unique rows -> Select values -> Table output -> dim_employee
+└── Select values -> PostgreSQL Bulk Loader -> fact_sales
+```
+
+Important ETL notes:
+
+- The source is a denormalized CSV file.
+- Dimension branches deduplicate rows using a Sort + Unique pattern.
+- Fact loading uses PostgreSQL Bulk Loader.
+- Output tables are not truncated automatically before insert.
+- If the pipeline is rerun, check for duplicates or truncate/load strategy first.
+
+## Power BI Dashboards
+
+The Power BI part of the project contains five analytical pages.
+
+Full documentation:
+
+[powerbi.md](<Power bi/powerbi.md>)
+
+### 1. Sales Dashboard
+
+Purpose: analyze global sales performance over time.
+
+Main KPIs:
+
+- Total revenue
+- Total quantity sold
+- Number of transactions
+- Average basket value
+
+Main visuals:
+
+- Revenue trend over time
+- Revenue by product category
+- Monthly seasonality
+- Top selling products
+
+### 2. Product Dashboard
+
+Purpose: understand product and category performance.
+
+Main KPIs:
+
+- Number of products
+- Average price
+- Products without sales
+- Number of categories
+
+Main visuals:
+
+- Revenue by product
+- Price distribution
+- Sales by resistance level
+- Price vs volume scatter plot
+
+### 3. Customer Dashboard
+
+Purpose: analyze customer value and buying behavior.
+
+Main KPIs:
+
+- Total customers
+- Active customers
+- Conversion rate
+- Customer lifetime value
+
+Main visuals:
+
+- Top customers by revenue
+- Customer distribution by country
+- Customer segmentation
+- Active customer trend
+- Average basket by segment
+
+### 4. Employee Dashboard
+
+Purpose: evaluate salesperson performance.
+
+Main KPIs:
+
+- Total employees
+- Active employees
+- Activity rate
+- Average revenue per employee
+
+Main visuals:
+
+- Top employees by revenue
+- Performance by age group
+- Performance by seniority
+- Revenue share by employee
+- Monthly revenue by employee
+
+### 5. Basket Analysis Dashboard
+
+Purpose: identify products that are frequently bought together.
+
+Main metrics:
+
+- Number of analyzed transactions
+- Number of products
+- Support threshold
+- Lift threshold
+
+Main visuals:
+
+- Top product associations
+- Support vs lift scatter plot
+- Association rules table
+
+## Basket Analysis
+
+Basket analysis, also called Market Basket Analysis, is used to discover relationships between products purchased in the same transaction.
+
+Detailed documentation and DAX formulas:
+
+[Basket_analysis_mining.md](<Power bi/Basket_analysis_mining.md>)
+
+Core metrics:
+
+| Metric | Meaning | Formula |
+| --- | --- | --- |
+| Support | Frequency of a product pair | Transactions with X and Y / Total transactions |
+| Confidence | Probability of buying Y when X is bought | Support(X,Y) / Support(X) |
+| Lift | Strength of the association compared with random chance | Support(X,Y) / (Support(X) * Support(Y)) |
+
+Business interpretation:
+
+| Lift Value | Meaning | Suggested Action |
+| --- | --- | --- |
+| `< 1` | Negative association | Do not recommend together |
+| `= 1` | No useful association | No priority |
+| `1 - 1.5` | Weak association | Monitor |
+| `1.5 - 2` | Good association | Use for cross-selling |
+| `> 2` | Strong association | Consider bundles or promotions |
+
+## Machine Learning Forecasting
+
+The `AI/` folder contains notebooks for revenue forecasting. The workflow is modular: preprocessing is done first, then each forecasting model is trained and compared.
+
+Main dashboard notebook:
+
+[grocery_forecasting_v3.ipynb](AI/grocery_forecasting_v3.ipynb)
+
+Model notebooks:
+
+| Notebook | Purpose |
+| --- | --- |
+| [01_Preprocessing.ipynb](AI/models/01_Preprocessing.ipynb) | Load daily revenue, aggregate monthly, correct COVID impact, engineer features, split train/test, define metrics. |
+| [02_HoltWinters.ipynb](AI/models/02_HoltWinters.ipynb) | Train Holt-Winters forecasting models. |
+| [03_XGBoost.ipynb](AI/models/03_XGBoost.ipynb) | Train XGBoost with engineered time-series features. |
+| [04_RandomForest.ipynb](AI/models/04_RandomForest.ipynb) | Train Random Forest regression for revenue forecasting. |
+| [05_Ensemble_Comparaison.ipynb](AI/models/05_Ensemble_Comparaison.ipynb) | Compare models and build a weighted ensemble. |
+| [06_Forecast_2023.ipynb](AI/models/06_Forecast_2023.ipynb) | Generate 2023 forecasts with confidence intervals. |
+
+The preprocessing notebook includes:
+
+- Monthly revenue aggregation
+- COVID-period correction using STL interpolation
+- Lag features
+- Rolling-window features
+- Year-over-year features
+- Time features
+- Train/test split
+- Walk-forward validation helpers
+- Metrics: MAE, RMSE, MAPE, sMAPE, R2, MASE, Diebold-Mariano test
+
+Model comparison results observed in the ensemble notebook:
+
+| Rank | Model | MAPE | R2 |
+| --- | --- | ---: | ---: |
+| 1 | Holt-Winters | 4.92% | 0.8678 |
+| 2 | Weighted Ensemble | 5.27% | 0.8111 |
+| 3 | XGBoost | 5.56% | 0.8184 |
+| 4 | Random Forest | 11.94% | 0.2128 |
+| 5 | SARIMA | 46.76% | -9.2000 |
+
+> Note: `grocery_forecasting_v3.ipynb` mentions SARIMA and Prophet in its dashboard text, but the current repository contains Holt-Winters, XGBoost, Random Forest, Ensemble Comparison, and Forecast 2023 notebooks.
+
+## Screenshots
+
+### Apache Hop Pipeline
+
+![Apache Hop Pipeline](<Images/Capture d'écran 2026-06-03 012115.png>)
+
+### Sales Dashboard
+
+![Sales Dashboard](<Images/Capture d'écran 2026-06-03 020525.png>)
+
+### Product Dashboard
+
+![Product Dashboard](<Images/Capture d'écran 2026-06-03 020535.png>)
+
+### Customer Dashboard
+
+![Customer Dashboard](<Images/Capture d'écran 2026-06-03 020543.png>)
+
+### Employee Dashboard
+
+![Employee Dashboard](<Images/Capture d'écran 2026-06-03 020549.png>)
+
+### Basket Analysis Dashboard
+
+![Basket Analysis Dashboard](<Images/Capture d'écran 2026-06-03 020602.png>)
+
+## Getting Started
+
+### 1. Clone or Open the Project
+
+Open the repository and move into this project folder:
 
 ```bash
-# Apache Hop CLI
-hop-run.sh -file="Dimension_Pipline.hpl" \
-  -param:SRC_PATH="/path/to/data" \
-  -param:DB_HOST="localhost"
+cd PowerBi_mining_ML
 ```
 
-### 3. Analyser le panier
+### 2. Download the Dataset
 
-Implémenter les formules DAX du fichier [Basket_analysis_mining.md](Basket_analysis_mining.md) dans Power BI ou reproduire en Python.
+Download the grocery sales dataset from Kaggle:
 
----
+```text
+https://www.kaggle.com/datasets/andrexibiza/grocery-sales-dataset
+```
 
-## 📋 Prérequis
+Place the raw files or generated denormalized file in the expected local path used by your notebooks and Apache Hop pipeline.
 
-- **Python** 3.8+ (pandas, numpy, mlxtend optionnel)
-- **Apache Hop** 2.x+ (pour pipelines ETL)
-- **Base de données** : PostgreSQL, MySQL, SQL Server (selon config)
-- **Power BI** (optionnel, pour dashboards & DAX)
-- **Java Runtime** (JRE/JDK pour Hop)
+### 3. Prepare the Database
 
----
+Create the PostgreSQL database, then run the SQL script:
 
-## 🤝 Contribuer
+```bash
+psql -d grocery_db -f "Apache HOP/SQL_Scripts.txt"
+```
 
-1. Vérifier [work.md](work.md) pour tâches en cours
-2. Tester les pipelines sur un sous-ensemble avant commit
-3. Documenter les nouveaux scripts ou analyses dans un README spécifique
-4. Externaliser les paramètres d'environnement (éviter hardcoding)
-5. Respecter la structure : un fichier README par ressource majeure
+The script creates:
 
----
+- `dim_category`
+- `dim_product`
+- `dim_customer`
+- `dim_employee`
+- `fact_sales`
 
-## 📞 Support
+### 4. Configure Apache Hop
 
-Questions ou bugs ? Ouvrez une issue ou consultez les README spécifiques liés à votre question :
-- **Pipeline Hop** → [Dimension_Pipline_README.md](Dimension_Pipline_README.md)
-- **Dataset CSV** → [grocery_sales_denormalized_README.md](grocery_sales_denormalized_README.md)
-- **Basket Analysis** → [Basket_analysis_mining.md](Basket_analysis_mining.md)
+In Apache Hop:
 
----
+1. Open `Apache HOP/Dimension_Pipline.hpl`.
+2. Configure the CSV file path.
+3. Configure the PostgreSQL connection named `grocery_db`.
+4. Confirm that the target schema is `public`.
+5. Run the pipeline.
 
-## 📝 Licence & Auteur
+### 5. Open Power BI
 
-Projet BI pour analyses de ventes et mining de données.  
-Généré et documenté : Juin 2026
+Use the generated warehouse tables or the denormalized CSV file as the data source. Recreate or connect the model according to the documentation in [powerbi.md](<Power bi/powerbi.md>).
 
+### 6. Run Forecasting Notebooks
+
+Open the notebooks in Jupyter, VS Code, or another notebook environment.
+
+Recommended order:
+
+```text
+AI/models/01_Preprocessing.ipynb
+AI/models/02_HoltWinters.ipynb
+AI/models/03_XGBoost.ipynb
+AI/models/04_RandomForest.ipynb
+AI/models/05_Ensemble_Comparaison.ipynb
+AI/models/06_Forecast_2023.ipynb
+```
+
+## Recommended Workflow
+
+For a full reproduction of the project:
+
+1. Download the Kaggle dataset.
+2. Inspect and clean source data in `Data_Preprocessing/`.
+3. Generate or verify the denormalized sales dataset.
+4. Create the PostgreSQL tables using `SQL_Scripts.txt`.
+5. Run the Apache Hop ETL pipeline.
+6. Validate row counts in all dimensions and facts.
+7. Connect Power BI to the warehouse or CSV data.
+8. Build or refresh the dashboards.
+9. Apply DAX basket analysis measures.
+10. Run ML notebooks for revenue forecasting.
+11. Compare model performance and export forecasts.
+
+## Technologies Used
+
+| Area | Tools |
+| --- | --- |
+| Data preprocessing | Python, pandas, Jupyter notebooks |
+| ETL | Apache Hop |
+| Database | PostgreSQL |
+| BI and visualization | Power BI, DAX |
+| Data mining | Market Basket Analysis, support, confidence, lift |
+| Forecasting | Holt-Winters, XGBoost, Random Forest, weighted ensemble |
+| Model evaluation | MAE, RMSE, MAPE, sMAPE, R2, MASE, Diebold-Mariano |
+
+## Troubleshooting
+
+### Images Do Not Display
+
+Some screenshot names include spaces and accented characters. If the images do not render in your Markdown viewer, open them directly from the `Images/` directory.
+
+### Apache Hop Cannot Find the CSV File
+
+Check the file path configured in the `CSV file input` transform. Use an absolute path if Apache Hop is running from a different working directory.
+
+### Database Connection Fails
+
+Verify:
+
+- PostgreSQL is running.
+- The database name is `grocery_db` or matches your Hop connection.
+- The username and password are correct.
+- The target tables exist before running the pipeline.
+
+### Duplicate Rows After Rerunning ETL
+
+The Hop outputs are configured without automatic truncation. Before rerunning the pipeline, either truncate the target tables manually or implement an upsert strategy.
+
+### Forecasting Notebook Fails Because a CSV Is Missing
+
+The preprocessing notebook expects revenue input data and exports prepared files such as:
+
+- `prepared_data.csv`
+- `train_data.csv`
+- `test_data.csv`
+
+Run `01_Preprocessing.ipynb` first, then run the model notebooks.
+
+## Future Improvements
+
+- Add an automated script to download and prepare the Kaggle dataset.
+- Add reproducible environment files such as `requirements.txt` or `environment.yml`.
+- Add data quality tests for nulls, duplicates, dates, and foreign keys.
+- Add an upsert or truncate-load mode to the Apache Hop pipeline.
+- Add Power BI `.pbix` file documentation if the binary report is included later.
+- Add model artifact exports for trained forecasting models.
+- Add automated dashboard refresh documentation.
+- Add a single orchestration script for preprocessing, ETL, and forecasting.
+
+## Author and Date
+
+Project documentation updated in June 2026.
+
+This project is intended for BI, data mining, and machine learning learning purposes using grocery retail sales data.

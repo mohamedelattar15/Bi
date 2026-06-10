@@ -1,0 +1,674 @@
+\documentclass[12pt,a4paper,twoside]{report}
+
+%==========================================================
+% Rapport de projet - Grocery Sales BI, Data Mining et ML
+%==========================================================
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{csquotes}
+\usepackage{mathpazo}
+\usepackage[scaled=0.92]{helvet}
+\usepackage{courier}
+\usepackage{microtype}
+\usepackage{geometry}
+\usepackage[dvipsnames,table]{xcolor}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{titletoc}
+\usepackage{tcolorbox}
+\usepackage{tikz}
+\usepackage{listings}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{hyperref}
+\tcbuselibrary{skins}
+\usetikzlibrary{positioning,arrows.meta}
+
+\geometry{
+  a4paper,
+  top=2.5cm,
+  bottom=2.7cm,
+  inner=3cm,
+  outer=2.2cm,
+  headheight=25pt,
+  includehead
+}
+
+\definecolor{PrimaryRed}{RGB}{180,45,35}
+\definecolor{DarkSlate}{RGB}{38,42,52}
+\definecolor{MidGray}{RGB}{96,102,112}
+\definecolor{LightGray}{RGB}{246,247,250}
+\definecolor{SoftRed}{RGB}{255,247,246}
+\definecolor{AccentBlue}{RGB}{48,104,178}
+\definecolor{TableHeader}{RGB}{48,52,64}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=PrimaryRed,
+  urlcolor=AccentBlue,
+  citecolor=PrimaryRed,
+  pdftitle={Rapport de projet - Grocery Sales BI Dashboard},
+  pdfauthor={Projet BI, Data Mining et Machine Learning}
+}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{6pt}
+\linespread{1.08}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[LE]{\small\color{MidGray}\leftmark}
+\fancyhead[RO]{\small\color{MidGray}\rightmark}
+\fancyfoot[C]{\small\color{MidGray}\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\headrule}{\hbox to\headwidth{\color{PrimaryRed}\leaders\hrule height \headrulewidth\hfill}}
+
+\titleformat{\chapter}[display]
+  {\normalfont\huge\bfseries\color{DarkSlate}}
+  {\begin{tikzpicture}
+    \fill[PrimaryRed] (0,0) rectangle (2.35cm,0.55cm);
+    \node[white,font=\Large\bfseries] at (1.175cm,0.275cm) {\chaptertitlename~\thechapter};
+  \end{tikzpicture}}
+  {10pt}
+  {\Huge\bfseries}
+  [\vspace{3pt}{\color{PrimaryRed}\rule{\textwidth}{1.2pt}}]
+\titlespacing*{\chapter}{0pt}{-20pt}{26pt}
+
+\titleformat{\section}
+  {\normalfont\Large\bfseries\color{DarkSlate}}
+  {\color{PrimaryRed}\thesection}{0.8em}{}
+  [\vspace{-3pt}{\color{MidGray!35}\rule{\textwidth}{0.5pt}}]
+
+\titleformat{\subsection}
+  {\normalfont\large\bfseries\color{DarkSlate}}
+  {\color{PrimaryRed}\thesubsection}{0.7em}{}
+
+\titlecontents{chapter}[0pt]
+  {\vspace{7pt}\bfseries\color{DarkSlate}}
+  {\contentslabel{2em}}{}
+  {\hfill\color{PrimaryRed}\contentspage}
+
+\titlecontents{section}[2em]
+  {\vspace{2pt}\color{MidGray}}
+  {\contentslabel{2.3em}}{}
+  {\titlerule*[0.5pc]{.}\contentspage}
+
+\setlist[itemize]{leftmargin=1.4em,itemsep=2pt,topsep=3pt}
+\setlist[enumerate]{leftmargin=1.4em,itemsep=2pt,topsep=3pt}
+
+\captionsetup{
+  labelfont={bf,color=PrimaryRed},
+  textfont={small,color=DarkSlate},
+  justification=centering
+}
+
+\tcbset{
+  enhanced,
+  boxrule=0.6pt,
+  arc=3pt,
+  left=8pt,
+  right=8pt,
+  top=7pt,
+  bottom=7pt
+}
+
+\newtcolorbox{infobox}[1]{
+  colback=SoftRed,
+  colframe=PrimaryRed,
+  title={#1},
+  fonttitle=\bfseries,
+  coltitle=white,
+  colbacktitle=PrimaryRed
+}
+
+\newtcolorbox{resultbox}[1]{
+  colback=LightGray,
+  colframe=DarkSlate!35,
+  title={#1},
+  fonttitle=\bfseries,
+  coltitle=DarkSlate,
+  colbacktitle=white
+}
+
+\lstset{
+  basicstyle=\footnotesize\ttfamily,
+  keywordstyle=\color{AccentBlue}\bfseries,
+  commentstyle=\color{MidGray}\itshape,
+  stringstyle=\color{PrimaryRed},
+  backgroundcolor=\color{LightGray},
+  frame=single,
+  rulecolor=\color{MidGray!45},
+  breaklines=true,
+  showstringspaces=false,
+  columns=fullflexible,
+  keepspaces=true
+}
+
+\newcommand{\projectname}{Grocery Sales BI Dashboard}
+\newcommand{\imgpath}{../PowerBi_mining_ML/Images}
+
+\begin{document}
+
+\begin{titlepage}
+  \centering
+  \vspace*{1cm}
+  {\Large\color{MidGray} Rapport de projet\par}
+  \vspace{1.2cm}
+  {\Huge\bfseries\color{DarkSlate} \projectname\par}
+  \vspace{0.35cm}
+  {\Large\color{PrimaryRed} Business Intelligence, Data Mining et Machine Learning\par}
+  \vspace{1.4cm}
+  \includegraphics[width=0.82\textwidth,height=6.2cm,keepaspectratio]{\imgpath/Amazon Background.jpg}
+  \vfill
+  \begin{tcolorbox}[colback=LightGray,colframe=DarkSlate!30,width=0.82\textwidth]
+    \centering
+    \textbf{Sujet :} conception d'une solution analytique complète pour l'étude des ventes d'une enseigne de distribution alimentaire.\\
+    \textbf{Technologies :} Python, pandas, Apache Hop, PostgreSQL, Power BI, DAX, modèles de prévision.
+  \end{tcolorbox}
+  \vfill
+  {\large Année universitaire 2025--2026\par}
+\end{titlepage}
+
+\pagenumbering{roman}
+\tableofcontents
+\listoffigures
+\listoftables
+\clearpage
+
+\pagenumbering{arabic}
+
+\chapter*{Résumé}
+\addcontentsline{toc}{chapter}{Résumé}
+
+Ce projet présente la mise en place d'une chaîne décisionnelle complète appliquée à un jeu de données de ventes alimentaires. L'objectif est de transformer des données transactionnelles brutes en informations exploitables pour le pilotage commercial : suivi du chiffre d'affaires, analyse des produits, compréhension du comportement client, évaluation des employés, détection d'associations entre produits et prévision des revenus.
+
+La solution repose sur une architecture de bout en bout. Les données sont d'abord préparées avec Python, puis chargées dans un entrepôt PostgreSQL selon un schéma en étoile à l'aide d'Apache Hop. Les tableaux de bord Power BI permettent ensuite une exploration interactive des indicateurs clés. Enfin, une couche analytique avancée complète le système avec une analyse du panier et des modèles de prévision de séries temporelles.
+
+\begin{infobox}{Apport principal du projet}
+Le projet ne se limite pas à la visualisation. Il relie la préparation des données, l'industrialisation ETL, la modélisation décisionnelle, l'analyse métier et l'apprentissage automatique dans une même démarche cohérente.
+\end{infobox}
+
+\chapter{Introduction générale}
+
+\section{Contexte}
+
+Les entreprises de distribution génèrent quotidiennement un volume important de données : tickets de caisse, produits vendus, clients, employés, remises, dates et montants. Ces données sont riches, mais leur valeur dépend de la capacité à les nettoyer, les structurer et les restituer sous forme d'indicateurs compréhensibles.
+
+Dans ce contexte, la Business Intelligence permet de construire un socle de pilotage fiable. Elle aide les responsables à répondre à des questions concrètes : quels produits génèrent le plus de chiffre d'affaires, quelles catégories progressent, quels clients sont les plus importants, quels employés réalisent les meilleures performances et quelles associations de produits peuvent soutenir des actions de vente croisée.
+
+\section{Problématique}
+
+La problématique du projet peut être formulée ainsi :
+
+\begin{quote}
+Comment concevoir une solution analytique capable de transformer des données de ventes alimentaires en tableaux de bord décisionnels, en règles d'association produit et en prévisions de chiffre d'affaires ?
+\end{quote}
+
+Cette problématique implique plusieurs exigences : disposer de données propres, créer un modèle adapté au reporting, automatiser le chargement, proposer des visualisations utiles et intégrer des méthodes analytiques avancées.
+
+\section{Objectifs du projet}
+
+Les objectifs principaux sont les suivants :
+
+\begin{itemize}
+  \item préparer un jeu de données exploitable à partir de données de ventes alimentaires ;
+  \item construire un modèle décisionnel en étoile dans PostgreSQL ;
+  \item développer un pipeline ETL avec Apache Hop ;
+  \item concevoir des tableaux de bord Power BI pour les ventes, les produits, les clients, les employés et l'analyse du panier ;
+  \item calculer des règles d'association avec les métriques support, confiance et lift ;
+  \item comparer plusieurs modèles de prévision du chiffre d'affaires ;
+  \item documenter clairement l'architecture et les résultats obtenus.
+\end{itemize}
+
+\section{Méthodologie}
+
+La démarche suivie est progressive. Elle commence par l'étude des sources de données, continue avec la préparation et la modélisation, puis aboutit à la restitution visuelle et à l'analyse prédictive.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  node distance=1.15cm,
+  flowstep/.style={rectangle,rounded corners=3pt,draw=DarkSlate!45,fill=LightGray,minimum width=10.2cm,minimum height=0.8cm,font=\small},
+  arrow/.style={-{Latex[length=2mm]},thick,color=PrimaryRed}
+]
+\node[flowstep] (raw) {Données brutes de ventes alimentaires};
+\node[flowstep,below=of raw] (prep) {Nettoyage, fusion et préparation avec Python};
+\node[flowstep,below=of prep] (etl) {Chargement ETL avec Apache Hop};
+\node[flowstep,below=of etl] (dw) {Entrepôt PostgreSQL en schéma en étoile};
+\node[flowstep,below=of dw] (bi) {Tableaux de bord Power BI et mesures DAX};
+\node[flowstep,below=of bi] (ml) {Basket analysis et prévision du chiffre d'affaires};
+\draw[arrow] (raw) -- (prep);
+\draw[arrow] (prep) -- (etl);
+\draw[arrow] (etl) -- (dw);
+\draw[arrow] (dw) -- (bi);
+\draw[arrow] (bi) -- (ml);
+\end{tikzpicture}
+\caption{Démarche générale du projet}
+\end{figure}
+
+\chapter{Présentation des données}
+
+\section{Source du jeu de données}
+
+Le projet s'appuie sur le jeu de données \textit{Grocery Sales Dataset}, disponible sur Kaggle. Il contient des informations relationnelles liées aux ventes, aux produits, aux catégories, aux clients, aux employés, aux villes et aux pays.
+
+Les données initiales représentent des transactions commerciales. Chaque transaction est rattachée à un produit, un client, un employé et une date. Cette structure permet d'analyser les ventes selon plusieurs dimensions métier.
+
+\section{Tables métier}
+
+\begin{table}[H]
+\centering
+\rowcolors{2}{LightGray}{white}
+\begin{tabularx}{\textwidth}{>{\bfseries}p{3.3cm}X}
+\toprule
+\rowcolor{TableHeader}
+\color{white}Table & \color{white}Description \\
+\midrule
+categories & Référentiel des familles de produits. \\
+products & Informations produits : nom, prix, catégorie, classe, résistance, allergie et durée de vitalité. \\
+customers & Données clients : identité, adresse, ville et pays. \\
+employees & Données employés : identité, date de naissance, genre, date d'embauche et ville. \\
+cities & Référentiel géographique des villes. \\
+countries & Référentiel des pays. \\
+sales & Faits de ventes : quantités, remises, prix total, date et transaction. \\
+\bottomrule
+\end{tabularx}
+\caption{Principales tables utilisées dans le projet}
+\end{table}
+
+\section{Jeu de données dénormalisé}
+
+Pour faciliter les traitements analytiques et l'alimentation du datawarehouse, un fichier dénormalisé est utilisé comme source intermédiaire. Il regroupe sur une même ligne les informations nécessaires à la construction des dimensions et de la table de faits.
+
+Cette approche simplifie le pipeline ETL : une seule source CSV est lue, puis divisée en plusieurs branches correspondant aux tables cibles. Elle est particulièrement adaptée à un projet pédagogique, car elle rend visible le passage entre un fichier plat et un modèle décisionnel structuré.
+
+\section{Préparation des données}
+
+La phase de préparation est réalisée dans des notebooks Python. Elle consiste notamment à :
+
+\begin{itemize}
+  \item inspecter les colonnes et les types ;
+  \item nettoyer les valeurs manquantes ou incohérentes ;
+  \item convertir les dates dans un format exploitable ;
+  \item vérifier les doublons ;
+  \item créer un fichier analytique dénormalisé ;
+  \item produire des agrégations utiles pour les analyses ultérieures.
+\end{itemize}
+
+\begin{resultbox}{Qualité attendue des données}
+Une attention particulière est portée à la cohérence des identifiants, au format des dates, aux montants de vente, aux quantités et aux relations entre faits et dimensions. Ces contrôles conditionnent la fiabilité des indicateurs Power BI et des modèles de prévision.
+\end{resultbox}
+
+\chapter{Architecture décisionnelle}
+
+\section{Vue d'ensemble}
+
+L'architecture retenue suit une logique classique de Business Intelligence. Les données sont préparées, chargées dans une base relationnelle PostgreSQL, puis exploitées dans Power BI.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth,height=8cm,keepaspectratio]{\imgpath/Capture d'écran 2026-06-03 012115.png}
+\caption{Pipeline Apache Hop utilisé pour charger le schéma décisionnel}
+\end{figure}
+
+\section{Schéma en étoile}
+
+Le modèle de données cible est un schéma en étoile. Il est composé de quatre dimensions principales et d'une table de faits. Ce type de modélisation est adapté aux outils de reporting, car il facilite les agrégations, les filtres et la navigation analytique.
+
+\begin{table}[H]
+\centering
+\rowcolors{2}{LightGray}{white}
+\begin{tabularx}{\textwidth}{>{\bfseries}p{3.2cm}p{3.8cm}X}
+\toprule
+\rowcolor{TableHeader}
+\color{white}Table & \color{white}Grain & \color{white}Rôle analytique \\
+\midrule
+dim\_category & Une ligne par catégorie & Analyse des ventes par famille de produits. \\
+dim\_product & Une ligne par produit & Étude des prix, classes, résistances et performances produit. \\
+dim\_customer & Une ligne par client & Analyse de la valeur client et de la répartition géographique. \\
+dim\_employee & Une ligne par employé & Évaluation de la performance commerciale individuelle. \\
+fact\_sales & Une ligne par ligne de vente & Mesure des quantités, remises, montants et transactions. \\
+\bottomrule
+\end{tabularx}
+\caption{Structure du schéma en étoile}
+\end{table}
+
+\section{Table de faits}
+
+La table \texttt{fact\_sales} centralise les mesures principales : quantité vendue, remise, prix total, date, numéro de transaction et heure. Elle contient aussi les clés permettant de rejoindre les dimensions produit, client et employé.
+
+Le grain retenu est la ligne de vente. Ce niveau de détail est suffisamment fin pour calculer des indicateurs globaux, mais aussi pour mener des analyses plus avancées comme le panier d'achat ou les tendances temporelles.
+
+\section{Dimensions}
+
+Les dimensions apportent le contexte métier des ventes :
+
+\begin{itemize}
+  \item la dimension produit décrit les articles vendus, leur catégorie, leur prix et leurs caractéristiques ;
+  \item la dimension client permet d'analyser la répartition et la valeur de la clientèle ;
+  \item la dimension employé sert à mesurer l'activité commerciale des vendeurs ;
+  \item la dimension catégorie facilite les regroupements de produits.
+\end{itemize}
+
+\chapter{Pipeline ETL avec Apache Hop}
+
+\section{Rôle de l'ETL}
+
+L'ETL assure le passage entre le fichier dénormalisé et le schéma décisionnel. Il extrait les données depuis le CSV, applique des transformations de sélection et de déduplication, puis charge les tables PostgreSQL.
+
+Apache Hop a été choisi pour sa représentation visuelle des flux. Chaque étape du pipeline correspond à une opération claire : lecture, tri, unicité, sélection de colonnes et sortie vers la base.
+
+\section{Branches du pipeline}
+
+Le pipeline part d'une source unique, puis se divise en cinq branches :
+
+\begin{enumerate}
+  \item chargement de \texttt{dim\_category} ;
+  \item chargement de \texttt{dim\_product} ;
+  \item chargement de \texttt{dim\_customer} ;
+  \item chargement de \texttt{dim\_employee} ;
+  \item chargement de \texttt{fact\_sales}.
+\end{enumerate}
+
+Les quatre branches de dimensions utilisent un enchaînement \textit{Sort rows} puis \textit{Unique rows}. Ce choix garantit qu'une seule ligne par identifiant métier est conservée avant l'insertion.
+
+\section{Chargement des tables}
+
+\begin{table}[H]
+\centering
+\rowcolors{2}{LightGray}{white}
+\begin{tabularx}{\textwidth}{>{\bfseries}p{3cm}p{4.5cm}X}
+\toprule
+\rowcolor{TableHeader}
+\color{white}Cible & \color{white}Transformations & \color{white}Description \\
+\midrule
+dim\_category & Tri, unicité, sélection & Extraction des catégories distinctes. \\
+dim\_product & Tri, unicité, sélection & Extraction des produits et de leurs attributs. \\
+dim\_customer & Tri, unicité, sélection & Extraction des clients et de leurs informations géographiques. \\
+dim\_employee & Tri, unicité, sélection & Extraction des employés. \\
+fact\_sales & Sélection, bulk loader & Chargement massif des lignes de ventes. \\
+\bottomrule
+\end{tabularx}
+\caption{Synthèse des chargements ETL}
+\end{table}
+
+\section{Points techniques}
+
+Les tables cibles sont créées préalablement dans PostgreSQL. Les sorties Apache Hop sont configurées en insertion. La table de faits utilise un \textit{PostgreSQL Bulk Loader}, ce qui améliore les performances pour les volumes importants.
+
+Un point d'attention concerne la relance du pipeline. Les sorties ne vident pas automatiquement les tables avant insertion. Il faut donc prévoir une stratégie de rechargement : suppression préalable, troncature contrôlée ou mécanisme d'upsert.
+
+\begin{lstlisting}[language=SQL,caption={Extrait simplifié du modèle relationnel cible}]
+CREATE TABLE dim_category (
+    categoryid INTEGER PRIMARY KEY,
+    categoryname VARCHAR(100)
+);
+
+CREATE TABLE fact_sales (
+    salesid BIGINT PRIMARY KEY,
+    employeeid INTEGER,
+    customerid INTEGER,
+    productid INTEGER,
+    date DATE,
+    quantity INTEGER,
+    discount NUMERIC(10,2),
+    totalprice NUMERIC(14,2),
+    transactionnumber VARCHAR(50),
+    time VARCHAR(10)
+);
+\end{lstlisting}
+
+\chapter{Tableaux de bord Power BI}
+
+\section{Objectif général}
+
+La partie Power BI permet de transformer le modèle de données en outil de pilotage interactif. Les utilisateurs peuvent suivre les indicateurs principaux, filtrer les résultats par période, catégorie ou employé, et naviguer entre plusieurs pages thématiques.
+
+Le tableau de bord est organisé autour de cinq vues : ventes, produits, clients, employés et panier.
+
+\section{Page ventes}
+
+La page ventes donne une vision globale de la performance commerciale. Elle présente les indicateurs essentiels : chiffre d'affaires total, quantité vendue, nombre de transactions et panier moyen.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth,height=8cm,keepaspectratio]{\imgpath/Capture d'écran 2026-06-03 020525.png}
+\caption{Tableau de bord d'analyse des ventes}
+\end{figure}
+
+Les graphiques mettent en évidence l'évolution temporelle du chiffre d'affaires, les catégories les plus rentables, la saisonnalité mensuelle et les produits les plus vendus. Cette vue répond aux questions de pilotage les plus fréquentes : progression des ventes, périodes fortes, produits moteurs et contribution des catégories.
+
+\section{Page produits}
+
+La page produits se concentre sur les références vendues. Elle analyse le chiffre d'affaires par produit, la distribution des prix, les ventes selon le niveau de résistance et la relation entre prix et volume.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth,height=8cm,keepaspectratio]{\imgpath/Capture d'écran 2026-06-03 020535.png}
+\caption{Tableau de bord d'analyse des produits}
+\end{figure}
+
+Cette analyse aide à repérer les produits stars, les produits à faible rotation et les catégories qui méritent une attention commerciale particulière.
+
+\section{Page clients}
+
+La page clients étudie la valeur et le comportement de la clientèle. Elle affiche le nombre de clients, les clients actifs, le taux de conversion et la valeur moyenne générée par client.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth,height=8cm,keepaspectratio]{\imgpath/Capture d'écran 2026-06-03 020543.png}
+\caption{Tableau de bord d'analyse des clients}
+\end{figure}
+
+Les visualisations permettent d'identifier les meilleurs clients, la répartition géographique, les segments de clientèle et l'évolution de l'activité client. Elles soutiennent des décisions liées à la fidélisation et à la segmentation marketing.
+
+\section{Page employés}
+
+La page employés mesure la contribution des vendeurs. Elle présente le nombre d'employés, le taux d'activité, le chiffre d'affaires moyen par employé et les classements individuels.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth,height=8cm,keepaspectratio]{\imgpath/Capture d'écran 2026-06-03 020549.png}
+\caption{Tableau de bord d'analyse des employés}
+\end{figure}
+
+Cette vue permet d'observer les écarts de performance, l'effet de l'ancienneté ou de la tranche d'âge, ainsi que l'évolution mensuelle des résultats individuels.
+
+\section{Page panier}
+
+La page panier exploite les règles d'association pour identifier les produits fréquemment achetés ensemble.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth,height=8cm,keepaspectratio]{\imgpath/Capture d'écran 2026-06-03 020602.png}
+\caption{Tableau de bord d'analyse du panier}
+\end{figure}
+
+Elle affiche les meilleures associations, un nuage de points support/lift et un tableau détaillé des règles. Cette page a une utilité opérationnelle directe pour les recommandations, les promotions groupées et l'organisation des rayons.
+
+\chapter{Data Mining : analyse du panier}
+
+\section{Principe}
+
+L'analyse du panier, ou \textit{Market Basket Analysis}, vise à découvrir les produits souvent achetés ensemble dans une même transaction. Elle repose sur la construction de paires de produits et sur le calcul de métriques permettant d'évaluer la fréquence et la force de l'association.
+
+\section{Métriques utilisées}
+
+\begin{table}[H]
+\centering
+\rowcolors{2}{LightGray}{white}
+\begin{tabularx}{\textwidth}{>{\bfseries}p{2.8cm}p{4.8cm}X}
+\toprule
+\rowcolor{TableHeader}
+\color{white}Métrique & \color{white}Formule & \color{white}Interprétation \\
+\midrule
+Support & Transactions contenant X et Y / total des transactions & Fréquence d'apparition de la paire. \\
+Confiance & Support(X,Y) / Support(X) & Probabilité d'acheter Y sachant que X est acheté. \\
+Lift & Support(X,Y) / (Support(X) $\times$ Support(Y)) & Force de l'association par rapport au hasard. \\
+\bottomrule
+\end{tabularx}
+\caption{Métriques de l'analyse du panier}
+\end{table}
+
+Le lift est la mesure la plus utile pour interpréter la pertinence commerciale d'une association. Un lift supérieur à 1 indique une association positive. Un lift supérieur ou égal à 1,5 est généralement considéré comme intéressant pour une action de vente croisée.
+
+\section{Construction dans Power BI}
+
+Dans Power BI, une table \texttt{Basket Analysis} est construite à partir d'une jointure croisée des produits. Les combinaisons redondantes sont évitées en ne conservant qu'un ordre unique entre \texttt{Product1} et \texttt{Product2}. Les colonnes calculées et mesures DAX déterminent ensuite le support, les confiances dans les deux sens et le lift.
+
+\begin{lstlisting}[language=SQL,caption={Principe de création des couples de produits en DAX}]
+Basket Analysis =
+FILTER(
+    CROSSJOIN(
+        SELECTCOLUMNS(VALUES(DF_Basket[productname]), "Product1", DF_Basket[productname]),
+        SELECTCOLUMNS(VALUES(DF_Basket[productname]), "Product2", DF_Basket[productname])
+    ),
+    [Product1] > [Product2]
+)
+\end{lstlisting}
+
+\section{Intérêt métier}
+
+Les résultats de l'analyse du panier peuvent être utilisés pour :
+
+\begin{itemize}
+  \item proposer des recommandations de produits complémentaires ;
+  \item créer des offres groupées ;
+  \item améliorer le placement des produits ;
+  \item soutenir des campagnes promotionnelles ciblées ;
+  \item détecter des comportements d'achat récurrents.
+\end{itemize}
+
+\chapter{Machine Learning : prévision du chiffre d'affaires}
+
+\section{Objectif}
+
+La partie Machine Learning a pour objectif de prévoir le chiffre d'affaires futur à partir de l'historique des ventes. La prévision permet d'anticiper l'activité, d'améliorer la planification et de soutenir les décisions liées aux stocks ou aux objectifs commerciaux.
+
+\section{Préparation temporelle}
+
+Les données de ventes sont agrégées par période afin de construire une série temporelle. La préparation inclut :
+
+\begin{itemize}
+  \item l'agrégation du chiffre d'affaires mensuel ;
+  \item la correction de périodes exceptionnelles ;
+  \item la création de variables de retard ;
+  \item la création de moyennes mobiles ;
+  \item l'ajout de variables calendaires ;
+  \item la séparation entre données d'entraînement et de test.
+\end{itemize}
+
+\section{Modèles comparés}
+
+Plusieurs approches sont évaluées : Holt-Winters, XGBoost, Random Forest, un ensemble pondéré et SARIMA. Chaque modèle est comparé à partir de métriques telles que MAE, RMSE, MAPE, sMAPE, R\textsuperscript{2} et MASE.
+
+\begin{table}[H]
+\centering
+\rowcolors{2}{LightGray}{white}
+\begin{tabular}{>{\bfseries}c l r r}
+\toprule
+\rowcolor{TableHeader}
+\color{white}Rang & \color{white}Modèle & \color{white}MAPE & \color{white}R\textsuperscript{2} \\
+\midrule
+1 & Holt-Winters & 4,92\% & 0,8678 \\
+2 & Ensemble pondéré & 5,27\% & 0,8111 \\
+3 & XGBoost & 5,56\% & 0,8184 \\
+4 & Random Forest & 11,94\% & 0,2128 \\
+5 & SARIMA & 46,76\% & -9,2000 \\
+\bottomrule
+\end{tabular}
+\caption{Comparaison des performances des modèles de prévision}
+\end{table}
+
+\section{Interprétation}
+
+Le modèle Holt-Winters obtient la meilleure performance selon le MAPE et le R\textsuperscript{2}. Ce résultat est cohérent avec une série présentant une tendance et une saisonnalité régulières. Les modèles XGBoost et l'ensemble pondéré restent compétitifs, tandis que Random Forest et SARIMA sont moins adaptés dans cette configuration.
+
+\begin{resultbox}{Résultat principal}
+Avec un MAPE de 4,92\%, Holt-Winters fournit la meilleure précision observée dans les comparaisons disponibles. Ce modèle constitue donc la référence du projet pour la prévision du chiffre d'affaires.
+\end{resultbox}
+
+\chapter{Discussion et limites}
+
+\section{Forces du projet}
+
+Le projet présente plusieurs points forts :
+
+\begin{itemize}
+  \item une architecture complète couvrant préparation, ETL, entrepôt, BI et ML ;
+  \item une modélisation en étoile lisible et adaptée au reporting ;
+  \item des tableaux de bord organisés par axes métier ;
+  \item une analyse du panier directement exploitable commercialement ;
+  \item une comparaison de modèles de prévision avec des métriques claires.
+\end{itemize}
+
+\section{Limites identifiées}
+
+Certaines limites doivent être prises en compte :
+
+\begin{itemize}
+  \item l'idempotence du pipeline ETL doit être renforcée pour éviter les doublons lors des relances ;
+  \item les contrôles de qualité pourraient être automatisés ;
+  \item la documentation du fichier Power BI pourrait être complétée par le fichier \texttt{.pbix} final ;
+  \item les modèles ML gagneraient à être exportés sous forme d'artefacts réutilisables ;
+  \item une orchestration globale permettrait de reproduire le projet plus facilement.
+\end{itemize}
+
+\section{Améliorations possibles}
+
+Les perspectives d'amélioration incluent l'ajout de tests de qualité des données, la mise en place d'un mode \textit{truncate/load} ou \textit{upsert}, l'automatisation du rafraîchissement Power BI, l'ajout d'un fichier d'environnement Python et la création d'une documentation d'installation plus détaillée.
+
+\chapter{Conclusion}
+
+Ce projet démontre la construction d'une solution analytique complète autour des ventes alimentaires. Les données brutes sont transformées en un entrepôt exploitable, puis restituées dans des tableaux de bord interactifs. Les analyses de panier et de prévision ajoutent une dimension avancée en permettant d'identifier des associations produits et d'anticiper le chiffre d'affaires.
+
+La solution obtenue répond aux principaux besoins de pilotage commercial : suivre la performance, comprendre les produits, analyser les clients, mesurer l'activité des employés et soutenir les décisions marketing. Elle constitue également une base solide pour des évolutions futures vers une plateforme BI plus automatisée et plus industrialisée.
+
+\appendix
+
+\chapter{Annexes}
+
+\section{Organisation du projet}
+
+\begin{lstlisting}[caption={Structure synthétique du répertoire projet}]
+PowerBi_mining_ML/
+  Data_Preprocessing/
+  Apache HOP/
+  Power bi/
+  AI/
+  Images/
+  README.md
+\end{lstlisting}
+
+\section{Technologies utilisées}
+
+\begin{table}[H]
+\centering
+\rowcolors{2}{LightGray}{white}
+\begin{tabularx}{\textwidth}{>{\bfseries}p{4cm}X}
+\toprule
+\rowcolor{TableHeader}
+\color{white}Domaine & \color{white}Technologies \\
+\midrule
+Préparation des données & Python, pandas, Jupyter Notebook \\
+ETL & Apache Hop \\
+Base de données & PostgreSQL \\
+Visualisation & Power BI, DAX \\
+Data mining & Market Basket Analysis, support, confiance, lift \\
+Machine Learning & Holt-Winters, XGBoost, Random Forest, ensemble pondéré \\
+Évaluation & MAE, RMSE, MAPE, sMAPE, R\textsuperscript{2}, MASE \\
+\bottomrule
+\end{tabularx}
+\caption{Synthèse des technologies utilisées}
+\end{table}
+
+\end{document}
