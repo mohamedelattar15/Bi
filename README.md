@@ -476,8 +476,6 @@ R²   :       0.8678
 
 **Insight clé** : La configuration additive à tendance amortie surpasse significativement la variante multiplicative (8.7% MAPE), faisant de Holt-Winters le modèle champion.
 
-![Holt-Winters Forecast](PowerBi_mining_ML/AI/models/modele2_holtwinters.png)
-
 ---
 
 #### 5.3 — XGBoost Regressor
@@ -507,8 +505,6 @@ R²   :       0.8184
 3. `lag_1` — Revenu du mois précédent
 4. `yoy_ratio` — Ratio année-sur-année
 5. `rolling_6` — Moyenne mobile 6 mois
-
-![XGBoost Forecast](PowerBi_mining_ML/AI/models/modele3_xgboost.png)
 
 ---
 
@@ -542,8 +538,6 @@ R²   :       0.2128
 5. `month_cos` — Encodage cyclique du mois
 
 Random Forest sous-performe en raison des données d'entraînement limitées (48 mois).
-
-![Random Forest Forecast](PowerBi_mining_ML/AI/models/modele4_random_forest.png)
 
 ---
 
@@ -603,8 +597,6 @@ Prévisions de revenus sur **12 mois pour 2023** avec le modèle champion Holt-W
 - **2022 réel** : ~14.10M€
 - **2023 prévision** : ~14.78M€
 - **Croissance estimée** : **+4.8%**
-
-![Forecast 2023](PowerBi_mining_ML/AI/models/forecast_2023.png)
 
 ---
 
