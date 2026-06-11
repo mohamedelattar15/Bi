@@ -1,68 +1,69 @@
 # 🛒 Grocery Sales — BI, Data Mining & Machine Learning
 
-> **Repository racine** — Ce README sert de page d'accueil pour l'ensemble du projet. Chaque dossier contient sa propre documentation détaillée.
+> **Root Repository** — This README serves as the home page for the entire project. Each subfolder contains its own detailed documentation.
 
-This project is an end-to-end **Business Intelligence**, **Data Mining**, and **Machine Learning** solution for a grocery sales dataset. It covers the full analytics pipeline: data preprocessing, warehouse modeling, ETL, interactive dashboards, market basket analysis, and revenue forecasting.
+This project covers the full analytics pipeline for a grocery sales dataset, addressing **two complementary approaches**:
 
-The goal is to transform raw grocery transaction data into business-ready insights: sales performance, product performance, customer behavior, employee performance, product associations, and revenue forecasts.
+- **Approach 1 (Power BI):** Classic analytics pipeline based on **Apache Hop → PostgreSQL → Power BI → Data Mining → Machine Learning**.
+- **Approach 2 (Code/Dashboard):** Code-oriented solution with a **FastAPI backend**, a **Next.js frontend**, and a **PostgreSQL database** — reproducing all dashboards and analyses in a modern web application.
+
+The goal is to transform raw grocery transaction data into actionable business insights: sales performance, product analysis, customer behavior, employee performance, market basket analysis, and revenue forecasting.
 
 ---
 
 ## 📂 Repository Overview
 
-| Folder | Étape | Description |
-| --- | --- | --- |
-| [`PowerBi_mining_ML/Data_Preprocessing/`](PowerBi_mining_ML/Data_Preprocessing/) | Prérequis | Data cleaning, fusion et préparation du fichier dénormalisé |
-| [`PowerBi_mining_ML/Apache HOP/`](PowerBi_mining_ML/Apache%20HOP/) | **① ETL** | Pipeline Apache Hop pour charger les données dans PostgreSQL |
-| [`database/`](database/) | **② Warehouse** | Schéma SQL du data warehouse PostgreSQL |
-| [`PowerBi_mining_ML/Power bi/`](PowerBi_mining_ML/Power%20bi/) | **③ BI & ④ Data Mining** | Dashboards Power BI et analyse du panier (Market Basket Analysis) |
-| [`PowerBi_mining_ML/AI/`](PowerBi_mining_ML/AI/) | **⑤ ML** | Notebooks de prévision de revenus (Holt-Winters, XGBoost, Random Forest) |
-| [`Dashboard/`](Dashboard/README.md) | Bonus | Application web (FastAPI + Next.js) |
-| [`datasets/`](datasets/) | — | Génération des datasets et exports CSV |
-| [`docker/`](docker/) | — | Orchestration Docker pour le dashboard web |
-| [`rapport/`](rapport/) | — | Rapport LaTeX du projet |
-
-> 👉 **Pour tous les détails du projet principal** (Power BI, ML, ETL, analyses), consultez le [`PowerBi_mining_ML/README.md`](PowerBi_mining_ML/README.md).
+| Folder | Description |
+| --- | --- |
+| [`PowerBI Version/`](PowerBI%20Version/) | **Approach 1** — Complete Power BI pipeline (Apache Hop ETL → PostgreSQL → Power BI → Data Mining → ML) |
+| [`Dashboard Version/`](Dashboard%20Version/) | **Approach 2** — Full-stack web dashboard (FastAPI + Next.js + PostgreSQL) |
+| [`Rapport + PPT/`](Rapport%20+%20PPT/) | Technical reports (PDF) and PowerPoint presentations |
+| [`data/`](data/) | Source datasets, CSV exports, and data generation notebooks |
 
 ---
 
-## Table of Contents
+## 📋 Table of Contents
 
-1. [Project Overview](#project-overview)
-2. [Main Objectives](#main-objectives)
-3. [Repository Structure](#repository-structure)
-4. [Dataset](#dataset)
-5. [Data Model](#data-model)
-6. [Pipeline par étapes](#pipeline-par-étapes)
-    - [Étape 1 — Apache Hop (ETL)](#étape-1--apache-hop-etl)
-    - [Étape 2 — PostgreSQL (Data Warehouse)](#étape-2--postgresql-data-warehouse)
-    - [Étape 3 — Power BI (Dashboards)](#étape-3--power-bi-dashboards)
-    - [Étape 4 — Data Mining (Basket Analysis)](#étape-4--data-mining-basket-analysis)
-    - [Étape 5 — Machine Learning (Forecasting)](#étape-5--machine-learning-forecasting)
-7. [Screenshots](#screenshots)
-8. [Getting Started](#getting-started)
-9. [Technologies Used](#technologies-used)
-10. [Troubleshooting](#troubleshooting)
-11. [Future Improvements](#future-improvements)
+1. [Approach 1 — Power BI](#-approach-1--power-bi)
+    - [Step 1 — Apache Hop (ETL)](#step-1--apache-hop-etl)
+    - [Step 2 — PostgreSQL (Data Warehouse)](#step-2--postgresql-data-warehouse)
+    - [Step 3 — Power BI (Dashboards)](#step-3--power-bi-dashboards)
+    - [Step 4 — Data Mining (Basket Analysis)](#step-4--data-mining-basket-analysis)
+    - [Step 5 — Machine Learning (Forecasting)](#step-5--machine-learning-forecasting)
+2. [Approach 2 — Dashboard Version](#-approach-2--dashboard-version)
+    - [Architecture](#21-architecture)
+    - [Tech Stack](#22-tech-stack)
+    - [Dashboard Pages](#23-dashboard-pages)
+    - [API Endpoints](#24-api-endpoints)
+    - [ETL Pipeline (Backend)](#25-etl-pipeline-backend)
+    - [Data Model](#26-data-model)
+    - [Quick Start](#27-quick-start)
+3. [Dataset](#dataset)
+4. [Screenshots](#screenshots)
+5. [Technologies Used](#technologies-used)
+6. [Troubleshooting](#troubleshooting)
+7. [Future Improvements](#future-improvements)
 
-## Project Overview
+---
 
-The project follows a complete analytics pipeline in **5 sequential steps**:
+# 🏢 Approach 1 — Power BI
+
+Complete analytics pipeline in **5 sequential steps**, from ETL to ML forecasting.
 
 ```text
                         ╔══════════════════════════════════╗
-                        ║  Pipeline en 5 étapes            ║
+                        ║  5-Step Pipeline                 ║
                         ╚══════════════════════════════════╝
 
     ┌──────────────┐     ┌──────────────┐     ┌──────────────┐
-    │  Étape 1     │     │  Étape 2     │     │  Étape 3     │
+    │  Step 1      │     │  Step 2      │     │  Step 3      │
     │  Apache Hop  │────▶│  PostgreSQL  │────▶│  Power BI    │
     │  (ETL)       │     │  (Warehouse) │     │  (Dashboards)│
     └──────────────┘     └──────────────┘     └──────┬───────┘
                                                       │
                                                       ▼
                                             ┌──────────────────┐
-                                            │  Étape 4         │
+                                            │  Step 4          │
                                             │  Data Mining     │
                                             │  (Basket Analy-  │
                                             │   sis)           │
@@ -70,60 +71,68 @@ The project follows a complete analytics pipeline in **5 sequential steps**:
                                                       │
                                                       ▼
                                             ┌──────────────────┐
-                                            │  Étape 5         │
+                                            │  Step 5          │
                                             │  Machine Learning│
                                             │  (Forecasting)   │
                                             └──────────────────┘
 ```
 
-It is designed for BI practice, data mining experiments, and machine learning forecasting on grocery retail data.
-
-> **💡 Lecture rapide** : Chaque dossier du repository correspond à une étape du pipeline. Suivez les sections ci-dessous dans l'ordre numérique.
-
-## Main Objectives
+### Main Objectives
 
 - Build a clean analytical dataset from grocery sales data.
-- Create a star schema suitable for reporting and dashboarding.
-- Load dimensions and facts into PostgreSQL using Apache Hop.
+- Create a star schema suitable for reporting and dashboards.
+- Load dimensions and facts into PostgreSQL via Apache Hop.
 - Design Power BI dashboards for sales, products, customers, employees, and basket analysis.
-- Apply market basket analysis to discover products frequently purchased together.
-- Build and compare forecasting models for revenue prediction.
-- Provide clear documentation for reproducing and extending the project.
+- Apply Market Basket Analysis to discover product associations.
+- Build and compare revenue forecasting models (Holt-Winters, XGBoost, Random Forest).
 
-## Repository Structure
+### PowerBI Version Folder Structure
 
 ```text
-PowerBi_mining_ML/
-├── README.md
-├── data.txt
-├── Images/                          # Screenshots of dashboards and pipeline
-├── Data_Preprocessing/              # [Prérequis] Data cleaning & fusion
-├── Apache HOP/                      # ═══ Étape 1 — ETL Pipeline ═══
-│   ├── Dimension_Pipline.hpl
-│   ├── Dimension_Pipline_README.md
-│   ├── grocery_sales_denormalized_README.md
-│   ├── SQL_Scripts.txt              # ═══ Étape 2 — PostgreSQL schema ═══
-│   └── work.md
-├── Power bi/                        # ═══ Étape 3 & 4 — BI & Data Mining ═══
-│   ├── powerbi.md                   #    → Power BI dashboards
-│   └── Basket_analysis_mining.md    #    → Market Basket Analysis (DAX)
-└── AI/                              # ═══ Étape 5 — Machine Learning ═══
-    ├── grocery_forecasting_v3.ipynb
-    ├── daily_revenue.csv
-    └── models/
-        ├── 01_Preprocessing.ipynb
-        ├── 02_HoltWinters.ipynb
-        ├── 03_XGBoost.ipynb
-        ├── 04_RandomForest.ipynb
-        ├── 05_Ensemble_Comparaison.ipynb
-        ├── 06_Forecast_2023.ipynb
-        ├── prepared_data.csv
-        ├── train_data.csv / test_data.csv
-        ├── predictions_*.csv
-        └── forecast_2023.csv
+PowerBI Version/
+├── Dashboard_grocery_db.pbix          # Power BI file
+├── patch_grocery_forecasting.py
+├── Analyse dataset/
+│   ├── CHARTS_AND_INSIGHTS.md
+│   └── dataset/
+│       ├── categories.csv
+│       ├── cities.csv
+│       ├── countries.csv
+│       ├── customers.csv
+│       ├── employees.csv
+│       ├── products.csv
+│       └── sales.csv
+└── PowerBi_mining_ML/
+    ├── README.md
+    ├── data.txt
+    ├── Images/                          # Dashboard screenshots
+    ├── Data_Preprocessing/              # [Prerequisite] Data cleaning & fusion
+    ├── Apache HOP/                      # ═══ Step 1 — ETL Pipeline ═══
+    │   ├── Dimension_Pipline.hpl
+    │   ├── Dimension_Pipline_README.md
+    │   ├── grocery_sales_denormalized_README.md
+    │   ├── SQL_Scripts.txt              # ═══ Step 2 — PostgreSQL schema ═══
+    │   └── work.md
+    ├── Power bi/                        # ═══ Steps 3 & 4 — BI & Data Mining ═══
+    │   ├── powerbi.md                   #    → Power BI dashboards
+    │   └── Basket_analysis_mining.md    #    → Market Basket Analysis (DAX)
+    └── AI/                              # ═══ Step 5 — Machine Learning ═══
+        ├── grocery_forecasting_v3.ipynb
+        ├── daily_revenue.csv
+        └── models/
+            ├── 01_Preprocessing.ipynb
+            ├── 02_HoltWinters.ipynb
+            ├── 03_XGBoost.ipynb
+            ├── 04_RandomForest.ipynb
+            ├── 05_Ensemble_Comparaison.ipynb
+            ├── 06_Forecast_2023.ipynb
+            ├── prepared_data.csv
+            ├── train_data.csv / test_data.csv
+            ├── predictions_*.csv
+            └── forecast_2023.csv
 ```
 
-> Note: Some screenshot file names contain accented characters on disk. If an image does not display in a Markdown viewer, open it directly from the `PowerBi_mining_ML/Images/` folder.
+> **Detailed documentation**: See [`PowerBI Version/PowerBi_mining_ML/README.md`](PowerBI%20Version/PowerBi_mining_ML/README.md).
 
 ## Dataset
 
@@ -147,7 +156,7 @@ Expected raw tables:
 | `countries` | Country reference data. |
 | `sales` | Transaction-level sales facts. |
 
-The project also uses a denormalized sales file for easier analysis and ETL loading. More details are available in [grocery_sales_denormalized_README.md](PowerBi_mining_ML/Apache%20HOP/grocery_sales_denormalized_README.md).
+The project also uses a denormalized sales file for easier analysis and ETL loading. More details are available in [grocery_sales_denormalized_README.md](PowerBI%20Version/PowerBi_mining_ML/Apache%20HOP/grocery_sales_denormalized_README.md).
 
 ## Data Model
 
@@ -168,27 +177,70 @@ The reporting model is a star schema composed of four dimensions and one fact ta
 | --- | --- | --- |
 | `fact_sales` | One row per sale line | `salesid`, `employeeid`, `customerid`, `productid`, `date`, `quantity`, `discount`, `totalprice`, `transactionnumber`, `time` |
 
-The SQL script for creating the warehouse tables is available in [SQL_Scripts.txt](PowerBi_mining_ML/Apache%20HOP/SQL_Scripts.txt).
+The SQL script for creating the warehouse tables is available in [SQL_Scripts.txt](PowerBI%20Version/PowerBi_mining_ML/Apache%20HOP/SQL_Scripts.txt).
 
 ---
 
-## Pipeline par étapes
+## Pipeline Steps
 
-Le projet suit un pipeline en **5 étapes séquentielles**. Chaque étape produit les données d'entrée pour l'étape suivante.
+The project follows a **5-step sequential pipeline**. Each step produces the input data for the next.
 
 ```text
                      ╔══════════════════════════════════════╗
-                     ║   PIPELINE COMPLET DU PROJET         ║
+                     ║        COMPLETE PROJECT PIPELINE      ║
                      ╚══════════════════════════════════════╝
 
-   [Données brutes]
+   [Raw Data]
          │
          ▼
 ┌──────────────────────────────────────────────────────────────────┐
-│  ÉTAPE 1 : Apache Hop (ETL)                                      │
+│  STEP 1 : Apache Hop (ETL)                                       │
 │  ┌──────────────────────────────────────────────────────────┐   │
-│  │  CSV fichier denormalisé  ──►  Tri + Dédup  ──►  Load   │   │
+│  │  Denormalized CSV  ──►  Sort + Dedup  ──►  Load         │   │
 │  │  dim_category, dim_product, dim_customer, dim_employee   │   │
+│  │  fact_sales (PostgreSQL Bulk Loader)                      │   │
+│  └──────────────────────────────────────────────────────────┘   │
+└──────────────────────────────────────────────────────────────────┘
+         │
+         ▼
+┌──────────────────────────────────────────────────────────────────┐
+│  STEP 2 : PostgreSQL (Data Warehouse)                            │
+│  ┌──────────────────────────────────────────────────────────┐   │
+│  │  Star Schema : 4 dimensions + 1 fact table               │   │
+│  │  Relational database for reporting                        │   │
+│  └──────────────────────────────────────────────────────────┘   │
+└──────────────────────────────────────────────────────────────────┘
+         │
+         ▼
+┌──────────────────────────────────────────────────────────────────┐
+│  STEP 3 : Power BI (Dashboards)                                  │
+│  ┌──────────────────────────────────────────────────────────┐   │
+│  │  Sales Dashboard  │  Product Dashboard                   │   │
+│  │  Customer Dashboard │  Employee Dashboard                │   │
+│  └──────────────────────────────────────────────────────────┘   │
+└──────────────────────────────────────────────────────────────────┘
+         │
+         ▼
+┌──────────────────────────────────────────────────────────────────┐
+│  STEP 4 : Data Mining (Basket Analysis)                          │
+│  ┌──────────────────────────────────────────────────────────┐   │
+│  │  Market Basket Analysis (DAX)                            │   │
+│  │  Support, Confidence, Lift                               │   │
+│  │  Product association rules                                │   │
+│  └──────────────────────────────────────────────────────────┘   │
+└──────────────────────────────────────────────────────────────────┘
+         │
+         ▼
+┌──────────────────────────────────────────────────────────────────┐
+│  STEP 5 : Machine Learning (Forecasting)                         │
+│  ┌──────────────────────────────────────────────────────────┐   │
+│  │  01_Preprocessing  ──►  02_HoltWinters                   │   │
+│  │                    ──►  03_XGBoost                       │   │
+│  │                    ──►  04_RandomForest                  │   │
+│  │  05_Ensemble_Comparaison  ──►  06_Forecast_2023         │   │
+│  └──────────────────────────────────────────────────────────┘   │
+└──────────────────────────────────────────────────────────────────┘
+```
 │  │  fact_sales (PostgreSQL Bulk Loader)                      │   │
 │  └──────────────────────────────────────────────────────────┘   │
 └──────────────────────────────────────────────────────────────────┘
@@ -213,17 +265,17 @@ Le projet suit un pipeline en **5 étapes séquentielles**. Chaque étape produi
          │
          ▼
 ┌──────────────────────────────────────────────────────────────────┐
-│  ÉTAPE 4 : Data Mining (Basket Analysis)                         │
+│  STEP 4 : Data Mining (Basket Analysis)                          │
 │  ┌──────────────────────────────────────────────────────────┐   │
 │  │  Market Basket Analysis (DAX)                            │   │
 │  │  Support, Confidence, Lift                               │   │
-│  │  Règles d'association produits                            │   │
+│  │  Product association rules                                │   │
 │  └──────────────────────────────────────────────────────────┘   │
 └──────────────────────────────────────────────────────────────────┘
          │
          ▼
 ┌──────────────────────────────────────────────────────────────────┐
-│  ÉTAPE 5 : Machine Learning (Forecasting)                        │
+│  STEP 5 : Machine Learning (Forecasting)                         │
 │  ┌──────────────────────────────────────────────────────────┐   │
 │  │  01_Preprocessing  ──►  02_HoltWinters                   │   │
 │  │                    ──►  03_XGBoost                       │   │
@@ -235,18 +287,18 @@ Le projet suit un pipeline en **5 étapes séquentielles**. Chaque étape produi
 
 ---
 
-### Étape 1 — Apache Hop (ETL)
+### Step 1 — Apache Hop (ETL)
 
-**Objectif** : Charger les données depuis un fichier CSV dénormalisé vers le data warehouse PostgreSQL en respectant le star schema.
+**Goal**: Load data from a denormalized CSV file into the PostgreSQL data warehouse following the star schema.
 
-**Fichier pipeline** :
+**Pipeline file**:
 ```text
-PowerBi_mining_ML/Apache HOP/Dimension_Pipline.hpl
+PowerBI Version/PowerBi_mining_ML/Apache HOP/Dimension_Pipline.hpl
 ```
 
-**Documentation détaillée** : [Dimension_Pipline_README.md](PowerBi_mining_ML/Apache%20HOP/Dimension_Pipline_README.md)
+**Full documentation**: [Dimension_Pipline_README.md](PowerBI%20Version/PowerBi_mining_ML/Apache%20HOP/Dimension_Pipline_README.md)
 
-**Branches du pipeline** :
+**Pipeline branches**:
 
 ```text
 CSV file input
@@ -257,36 +309,36 @@ CSV file input
 └── Select values → PostgreSQL Bulk Loader → fact_sales
 ```
 
-**Notes importantes** :
-- La source est un fichier CSV dénormalisé.
-- Les branches de dimensions dédupliquent les lignes via Sort + Unique.
-- Le chargement des faits utilise PostgreSQL Bulk Loader.
-- Les tables de sortie **ne sont pas tronquées automatiquement** avant insertion.
-- En cas de réexécution, vérifier les doublons ou adopter une stratégie truncate/load.
+**Important notes**:
+- The source is a denormalized CSV file.
+- Dimension branches deduplicate rows via Sort + Unique.
+- The fact table uses PostgreSQL Bulk Loader.
+- Output tables are **not automatically truncated** before insertion.
+- On re-execution, check for duplicates or adopt a truncate/load strategy.
 
 ---
 
-### Étape 2 — PostgreSQL (Data Warehouse)
+### Step 2 — PostgreSQL (Data Warehouse)
 
-**Objectif** : Héberger le star schema dans une base de données PostgreSQL pour servir de source unique pour le reporting Power BI.
+**Goal**: Host the star schema in a PostgreSQL database to serve as the single source for Power BI reporting.
 
-**Script SQL** : [SQL_Scripts.txt](PowerBi_mining_ML/Apache%20HOP/SQL_Scripts.txt)
+**SQL script**: [SQL_Scripts.txt](PowerBI%20Version/PowerBi_mining_ML/Apache%20HOP/SQL_Scripts.txt)
 
 ```bash
-psql -d grocery_db -f "PowerBi_mining_ML/Apache HOP/SQL_Scripts.txt"
+psql -d grocery_db -f "PowerBI Version/PowerBi_mining_ML/Apache HOP/SQL_Scripts.txt"
 ```
 
-Ce script crée les tables suivantes :
+This script creates the following tables:
 
 | Table | Type | Description |
 | --- | --- | --- |
-| `dim_category` | Dimension | Catégories de produits |
-| `dim_product` | Dimension | Produits avec prix, classe, allergène, résistance |
-| `dim_customer` | Dimension | Clients avec adresse et localisation |
-| `dim_employee` | Dimension | Employés avec date d'embauche et genre |
-| `fact_sales` | Fait | Transactions de vente (quantité, prix total, remise) |
+| `dim_category` | Dimension | Product categories |
+| `dim_product` | Dimension | Products with price, class, allergen, resistance |
+| `dim_customer` | Dimension | Customers with address and location |
+| `dim_employee` | Dimension | Employees with hire date and gender |
+| `fact_sales` | Fact | Sales transactions (quantity, total price, discount) |
 
-**Schéma en étoile** :
+**Star schema**:
 
 ```text
     dim_category ──────┐
@@ -300,100 +352,100 @@ Ce script crée les tables suivantes :
 
 ---
 
-### Étape 3 — Power BI (Dashboards)
+### Step 3 — Power BI (Dashboards)
 
-**Objectif** : Créer des tableaux de bord interactifs pour l'analyse des ventes, produits, clients et employés.
+**Goal**: Create interactive dashboards for sales, product, customer, and employee analysis.
 
-**Documentation complète** : [powerbi.md](PowerBi_mining_ML/Power%20bi/powerbi.md)
+**Full documentation**: [powerbi.md](PowerBI%20Version/PowerBi_mining_ML/Power%20bi/powerbi.md)
 
 #### 3.1 Sales Dashboard
 
-Analyse globale des performances de vente dans le temps.
+Global sales performance analysis over time.
 
-| KPIs | Visualisations |
+| KPIs | Visualizations |
 | --- | --- |
-| Total revenu | Tendance du revenu dans le temps |
-| Quantité totale vendue | Revenu par catégorie de produit |
-| Nombre de transactions | Saisonnalité mensuelle |
-| Panier moyen | Top produits les plus vendus |
+| Total Revenue | Revenue trend over time |
+| Total Quantity Sold | Revenue by product category |
+| Number of Transactions | Monthly seasonality |
+| Average Basket | Top selling products |
 
 #### 3.2 Product Dashboard
 
-Performance des produits et catégories.
+Product and category performance.
 
-| KPIs | Visualisations |
+| KPIs | Visualizations |
 | --- | --- |
-| Nombre de produits | Revenu par produit |
-| Prix moyen | Distribution des prix |
-| Produits sans vente | Ventes par niveau de résistance |
-| Nombre de catégories | Scatter plot prix vs volume |
+| Number of Products | Revenue by product |
+| Average Price | Price distribution |
+| Products without sales | Sales by resistance level |
+| Number of Categories | Products without sales |
 
 #### 3.3 Customer Dashboard
 
-Valeur client et comportement d'achat.
+Customer value and purchasing behavior.
 
-| KPIs | Visualisations |
+| KPIs | Visualizations |
 | --- | --- |
-| Total clients | Top clients par revenu |
-| Clients actifs | Distribution par pays |
-| Taux de conversion | Segmentation client |
-| Lifetime value | Tendance des clients actifs |
+| Total Customers | Top customers by revenue |
+| Active Customers | Distribution by country |
+| Conversion Rate | Customer segmentation |
+| Lifetime Value | Active customers trend |
 
 #### 3.4 Employee Dashboard
 
-Performance des vendeurs.
+Salesperson performance.
 
-| KPIs | Visualisations |
+| KPIs | Visualizations |
 | --- | --- |
-| Total employés | Top employés par revenu |
-| Employés actifs | Performance par âge et ancienneté |
-| Taux d'activité | Part de revenu par employé |
-| Revenu moyen par employé | Revenu mensuel par employé |
+| Total Employees | Top employees by revenue |
+| Active Employees | Performance by age and seniority |
+| Activity Rate | Revenue share per employee |
+| Average Revenue per Employee | Monthly revenue per employee |
 
 ---
 
-### Étape 4 — Data Mining (Basket Analysis)
+### Step 4 — Data Mining (Basket Analysis)
 
-**Objectif** : Découvrir les associations entre produits achetés ensemble dans un même transaction (Market Basket Analysis).
+**Goal**: Discover product associations within the same transaction (Market Basket Analysis).
 
-**Documentation détaillée et formules DAX** : [Basket_analysis_mining.md](PowerBi_mining_ML/Power%20bi/Basket_analysis_mining.md)
+**Detailed documentation and DAX formulas**: [Basket_analysis_mining.md](PowerBI%20Version/PowerBi_mining_ML/Power%20bi/Basket_analysis_mining.md)
 
-#### Dashboard Basket Analysis
+#### Basket Analysis Dashboard
 
-| Métriques | Visualisations |
+| Metrics | Visualizations |
 | --- | --- |
-| Transactions analysées | Top associations produits |
-| Nombre de produits | Scatter plot Support vs Lift |
-| Seuil de support | Tableau des règles d'association |
-| Seuil de lift | |
+| Analyzed Transactions | Top product associations |
+| Number of Products | Scatter plot Support vs Lift |
+| Support Threshold | Association rules table |
+| Lift Threshold | |
 
-#### Métriques fondamentales
+#### Fundamental Metrics
 
-| Métrique | Signification | Formule |
+| Metric | Meaning | Formula |
 | --- | --- | --- |
-| **Support** | Fréquence d'une paire de produits | Transactions(X∪Y) / Total transactions |
-| **Confiance** | Probabilité d'acheter Y quand X est acheté | Support(X,Y) / Support(X) |
-| **Lift** | Force de l'association vs. le hasard | Support(X,Y) / (Support(X) × Support(Y)) |
+| **Support** | Frequency of a product pair | Transactions(X∪Y) / Total transactions |
+| **Confidence** | Probability of buying Y when X is bought | Support(X,Y) / Support(X) |
+| **Lift** | Strength of association vs. random | Support(X,Y) / (Support(X) × Support(Y)) |
 
-#### Interprétation métier
+#### Business Interpretation
 
-| Valeur du Lift | Signification | Action suggérée |
+| Lift Value | Meaning | Suggested Action |
 | --- | --- | --- |
-| `< 1` | Association négative | Ne pas recommander ensemble |
-| `= 1` | Aucune association utile | Aucune priorité |
-| `1 – 1.5` | Association faible | Surveiller |
-| `1.5 – 2` | Bonne association | Utiliser pour cross-selling |
-| `> 2` | Association forte | Proposer des bundles ou promotions |
+| `< 1` | Negative association | Don't recommend together |
+| `= 1` | No useful association | No priority |
+| `1 – 1.5` | Weak association | Monitor |
+| `1.5 – 2` | Good association | Use for cross-selling |
+| `> 2` | Strong association | Suggest bundles or promotions |
 
 ---
 
-### Étape 5 — Machine Learning (Forecasting)
+### Step 5 — Machine Learning (Forecasting)
 
-**Objectif** : Prédire le revenu mensuel futur en comparant plusieurs modèles de séries temporelles et algorithmes de ML.
+**Goal**: Predict future monthly revenue by comparing multiple time series and ML models.
 
-**Dossier** : `PowerBi_mining_ML/AI/models/`
+**Folder**: `PowerBI Version/PowerBi_mining_ML/AI/models/`
 
-Le pipeline ML suit un ordre strict : preprocessing d'abord, puis entraînement des modèles, comparaison d'ensemble, et enfin prévision future.
+The ML pipeline follows a strict order: preprocessing first, then model training, ensemble comparison, and finally future forecasting.
 
 ```text
 daily_revenue.csv
@@ -407,64 +459,64 @@ daily_revenue.csv
 
 #### Notebook Pipeline
 
-| # | Notebook | Objectif | Sorties |
+| # | Notebook | Goal | Outputs |
 | --- | --- | --- | --- |
-| 01 | [01_Preprocessing.ipynb](PowerBi_mining_ML/AI/models/01_Preprocessing.ipynb) | Chargement, correction COVID, feature engineering, split train/test | `prepared_data.csv`, `train_data.csv`, `test_data.csv` |
-| 02 | [02_HoltWinters.ipynb](PowerBi_mining_ML/AI/models/02_HoltWinters.ipynb) | Lissage exponentiel triple (Holt-Winters additif, tendance amortie) | `predictions_holtwinters.csv` |
-| 03 | [03_XGBoost.ipynb](PowerBi_mining_ML/AI/models/03_XGBoost.ipynb) | Gradient Boosting avec analyse d'importance des features | `predictions_xgboost.csv` |
-| 04 | [04_RandomForest.ipynb](PowerBi_mining_ML/AI/models/04_RandomForest.ipynb) | Random Forest régression avec importance des features | `predictions_random_forest.csv` |
-| 05 | [05_Ensemble_Comparaison.ipynb](PowerBi_mining_ML/AI/models/05_Ensemble_Comparaison.ipynb) | Ensemble pondéré + test statistique Diebold-Mariano | `comparaison_finale.csv` |
-| 06 | [06_Forecast_2023.ipynb](PowerBi_mining_ML/AI/models/06_Forecast_2023.ipynb) | Prévision 2023 avec intervalles de confiance bootstrap | `forecast_2023.csv` |
+| 01 | [01_Preprocessing.ipynb](PowerBI%20Version/PowerBi_mining_ML/AI/models/01_Preprocessing.ipynb) | Load, COVID correction, feature engineering, train/test split | `prepared_data.csv`, `train_data.csv`, `test_data.csv` |
+| 02 | [02_HoltWinters.ipynb](PowerBI%20Version/PowerBi_mining_ML/AI/models/02_HoltWinters.ipynb) | Triple exponential smoothing (additive, damped trend) | `predictions_holtwinters.csv` |
+| 03 | [03_XGBoost.ipynb](PowerBI%20Version/PowerBi_mining_ML/AI/models/03_XGBoost.ipynb) | Gradient Boosting with feature importance | `predictions_xgboost.csv` |
+| 04 | [04_RandomForest.ipynb](PowerBI%20Version/PowerBi_mining_ML/AI/models/04_RandomForest.ipynb) | Random Forest regression with feature importance | `predictions_random_forest.csv` |
+| 05 | [05_Ensemble_Comparaison.ipynb](PowerBI%20Version/PowerBi_mining_ML/AI/models/05_Ensemble_Comparaison.ipynb) | Weighted ensemble + Diebold-Mariano test | `comparaison_finale.csv` |
+| 06 | [06_Forecast_2023.ipynb](PowerBI%20Version/PowerBi_mining_ML/AI/models/06_Forecast_2023.ipynb) | 2023 forecast with bootstrap confidence intervals | `forecast_2023.csv` |
 
 ---
 
 #### 5.1 — Preprocessing & Feature Engineering
 
-Le notebook de preprocessing gère toutes les étapes de préparation des données :
+The preprocessing notebook handles all data preparation steps:
 
-**Chargement & Agrégation**
-- Lecture de `daily_revenue.csv` contenant les revenus journaliers
-- Rééchantillonnage en fréquence mensuelle (somme) — **60 mois** de 2018 à 2022
+**Loading & Aggregation**
+- Reads `daily_revenue.csv` containing daily revenue data
+- Resamples to monthly frequency (sum) — **60 months** from 2018 to 2022
 
-**Correction COVID-19 (Interpolation STL)**
-- Période COVID identifiée : **mars 2020 — juin 2021** (16 mois)
-- Utilise **STL decomposition** (period=12, robust=True) pour extraire tendance, saisonnalité et résidus
-- Remplace les résidus anormaux des mois COVID par des échantillons aléatoires de la distribution saine
-- Reconstruit le revenu corrigé : `trend + seasonal + new_residuals`
+**COVID-19 Correction (STL Interpolation)**
+- COVID period identified: **March 2020 — June 2021** (16 months)
+- Uses **STL decomposition** (period=12, robust=True) to extract trend, seasonality, and residuals
+- Replaces abnormal residuals from COVID months with random samples from the healthy distribution
+- Reconstructs corrected revenue: `trend + seasonal + new_residuals`
 
 **Feature Engineering (21 features)**
 
-| Catégorie | Features | Description |
+| Category | Features | Description |
 | --- | --- | --- |
-| **Temps** | `month_sin`, `month_cos`, `quarter_sin`, `quarter_cos` | Encodage cyclique via sin/cos |
-| **Calendrier** | `is_december`, `is_summer`, `is_january` | Flags binaires pour périodes saisonnières |
-| **Tendance** | `trend`, `trend_sq` | Tendance linéaire et quadratique |
-| **COVID** | `covid_severe`, `covid_moderate`, `covid_flag` | Indicateurs de pandémie |
-| **Lags** | `lag_1`, `lag_2`, `lag_3`, `lag_6`, `lag_12` | Revenus des mois précédents |
-| **Moyennes mobiles** | `rolling_3`, `rolling_6`, `rolling_12` | Moyennes glissantes (décalées) |
-| **Volatilité** | `volatility_3`, `volatility_6` | Écarts-types glissants |
-| **Min/Max mobile** | `rolling_min_6`, `rolling_max_6` | Plages glissantes |
-| **YoY** | `yoy_growth`, `yoy_ratio` | Variation et ratio année-sur-année |
+| **Time** | `month_sin`, `month_cos`, `quarter_sin`, `quarter_cos` | Cyclic encoding via sin/cos |
+| **Calendar** | `is_december`, `is_summer`, `is_january` | Binary flags for seasonal periods |
+| **Trend** | `trend`, `trend_sq` | Linear and quadratic trend |
+| **COVID** | `covid_severe`, `covid_moderate`, `covid_flag` | Pandemic indicators |
+| **Lags** | `lag_1`, `lag_2`, `lag_3`, `lag_6`, `lag_12` | Previous months' revenue |
+| **Moving Averages** | `rolling_3`, `rolling_6`, `rolling_12` | Rolling averages (shifted) |
+| **Volatility** | `volatility_3`, `volatility_6` | Rolling standard deviations |
+| **Min/Max** | `rolling_min_6`, `rolling_max_6` | Rolling ranges |
+| **YoY** | `yoy_growth`, `yoy_ratio` | Year-over-year change and ratio |
 
 **Train/Test Split**
-- **Train** : janvier 2018 — décembre 2021 (48 mois)
-- **Test** : janvier 2022 — décembre 2022 (12 mois)
+- **Train**: January 2018 — December 2021 (48 months)
+- **Test**: January 2022 — December 2022 (12 months)
 - Walk-forward validation via `TimeSeriesSplit`
 
-**Métriques d'évaluation**
+**Evaluation Metrics**
 - MAE, RMSE, MAPE, sMAPE, R², MASE
-- Test Diebold-Mariano pour la comparaison statistique
+- Diebold-Mariano test for statistical comparison
 
 ---
 
 #### 5.2 — Holt-Winters (Triple Exponential Smoothing)
 
-Le meilleur modèle avec **MAPE de 4.92%**.
+The best model with **MAPE of 4.92%**.
 
 **Configuration**
-- **Tendance** : Additive avec **tendance amortie** (`damped_trend=True`)
-- **Saisonnalité** : Additive, **period=12** (mensuelle)
-- **Optimisation** : Automatique via `use_brute=True`
+- **Trend**: Additive with **damped trend** (`damped_trend=True`)
+- **Seasonality**: Additive, **period=12** (monthly)
+- **Optimization**: Automatic via `use_brute=True`
 
 **Performance**
 ```text
@@ -474,16 +526,16 @@ MAPE :         4.92 %
 R²   :       0.8678
 ```
 
-**Insight clé** : La configuration additive à tendance amortie surpasse significativement la variante multiplicative (8.7% MAPE), faisant de Holt-Winters le modèle champion.
+**Key insight**: The additive damped-trend configuration significantly outperforms the multiplicative variant (8.7% MAPE), making Holt-Winters the champion model.
 
 ---
 
 #### 5.3 — XGBoost Regressor
 
-Gradient boosting avec **MAPE de 5.56%**.
+Gradient boosting with **MAPE of 5.56%**.
 
-**Hyperparamètres**
-| Paramètre | Valeur |
+**Hyperparameters**
+| Parameter | Value |
 | --- | --- |
 | `n_estimators` | 200 |
 | `max_depth` | 10 |
@@ -499,21 +551,21 @@ MAPE :         5.56 %
 R²   :       0.8184
 ```
 
-**Top 5 Features** (par importance) :
-1. `lag_12` — Revenu de l'année précédente (signal saisonnier le plus fort)
-2. `rolling_12` — Moyenne mobile 12 mois
-3. `lag_1` — Revenu du mois précédent
-4. `yoy_ratio` — Ratio année-sur-année
-5. `rolling_6` — Moyenne mobile 6 mois
+**Top 5 Features** (by importance):
+1. `lag_12` — Previous year's revenue (strongest seasonal signal)
+2. `rolling_12` — 12-month rolling average
+3. `lag_1` — Previous month's revenue
+4. `yoy_ratio` — Year-over-year ratio
+5. `rolling_6` — 6-month rolling average
 
 ---
 
 #### 5.4 — Random Forest Regressor
 
-Bagging ensemble avec **MAPE de 11.94%**.
+Bagging ensemble with **MAPE of 11.94%**.
 
-**Hyperparamètres**
-| Paramètre | Valeur |
+**Hyperparameters**
+| Parameter | Value |
 | --- | --- |
 | `n_estimators` | 100 |
 | `max_depth` | 4 |
@@ -530,135 +582,286 @@ MAPE :        11.94 %
 R²   :       0.2128
 ```
 
-**Top 5 Features** :
-1. `lag_12` — Feature saisonnière dominante
-2. `rolling_12` — Tendance long-terme
-3. `yoy_ratio` — Comparaison année-sur-année
-4. `lag_6` — Mémoire semestrielle
-5. `month_cos` — Encodage cyclique du mois
+**Top 5 Features**:
+1. `lag_12` — Dominant seasonal feature
+2. `rolling_12` — Long-term trend
+3. `yoy_ratio` — Year-over-year comparison
+4. `lag_6` — Semi-annual memory
+5. `month_cos` — Cyclic month encoding
 
-Random Forest sous-performe en raison des données d'entraînement limitées (48 mois).
+Random Forest underperforms due to limited training data (48 months).
 
 ---
 
 #### 5.5 — Ensemble Comparison & Statistical Testing
 
-Compare tous les modèles et construit un **ensemble pondéré**.
+Compares all models and builds a **weighted ensemble**.
 
-**Méthode de pondération** : Pondération inverse MAPE — les modèles avec un MAPE plus faible reçoivent un poids plus élevé :
+**Weighting method**: Inverse MAPE weighting — models with lower MAPE receive higher weight:
 
 ```text
 weight_i = (1 / MAPE_i) / Σ(1 / MAPE_j)
 ```
 
-**Résultats finaux**
+**Final results**
 
-| Rang | Modèle | MAPE (%) | R² |
+| Rank | Model | MAPE (%) | R² |
 | --- | --- | ---: | ---: |
 | 🥇 | **Holt-Winters** | **4.92%** | **0.8678** |
 | 🥈 | **Weighted Ensemble** | **5.27%** | **0.8111** |
 | 🥉 | XGBoost | 5.56% | 0.8184 |
 | 4 | Random Forest | 11.94% | 0.2128 |
 
-> **Note** : SARIMA a été testé mais a obtenu un MAPE de 46.76% avec un R² de -9.20, confirmant que Holt-Winters additif amorti est le plus adapté.
+> **Note**: SARIMA was tested but achieved a MAPE of 46.76% with R² of -9.20, confirming that damped additive Holt-Winters is the most suitable model.
 
-**Test Diebold-Mariano** : Holt-Winters montre une amélioration statistiquement significative par rapport à Random Forest (p < 0.05).
+**Diebold-Mariano test**: Holt-Winters shows a statistically significant improvement over Random Forest (p < 0.05).
 
 ---
 
 #### 5.6 — Forecast 2023
 
-Prévisions de revenus sur **12 mois pour 2023** avec le modèle champion Holt-Winters et **intervalles de confiance bootstrap**.
+Revenue forecast for **12 months in 2023** using the champion Holt-Winters model with **bootstrap confidence intervals**.
 
-**Méthodologie**
-- Ré-entraînement de Holt-Winters sur les données complètes 2018-2022 (60 mois)
-- Génération des prévisions ponctuelles pour janvier — décembre 2023
-- **Intervalles de confiance à 95%** via bootstrap des résidus (1 000 simulations)
+**Methodology**
+- Retrain Holt-Winters on full 2018-2022 data (60 months)
+- Generate point forecasts for January — December 2023
+- **95% confidence intervals** via bootstrap of residuals (1,000 simulations)
 
-**Résultats de la prévision**
+**Forecast results**
 
-| Mois | Prévision | IC 95% Bas | IC 95% Haut |
+| Month | Forecast | 95% CI Low | 95% CI High |
 | --- | ---: | ---: | ---: |
-| Janvier 2023 | 1.23M€ | 1.15M€ | 1.31M€ |
-| Février 2023 | 1.18M€ | 1.10M€ | 1.26M€ |
-| Mars 2023 | 1.25M€ | 1.17M€ | 1.33M€ |
-| Avril 2023 | 1.20M€ | 1.12M€ | 1.28M€ |
-| Mai 2023 | 1.22M€ | 1.14M€ | 1.30M€ |
-| Juin 2023 | 1.19M€ | 1.11M€ | 1.27M€ |
-| Juillet 2023 | 1.21M€ | 1.13M€ | 1.29M€ |
-| Août 2023 | 1.17M€ | 1.09M€ | 1.25M€ |
-| Septembre 2023 | 1.24M€ | 1.16M€ | 1.32M€ |
-| Octobre 2023 | 1.26M€ | 1.18M€ | 1.34M€ |
-| Novembre 2023 | 1.28M€ | 1.20M€ | 1.36M€ |
-| Décembre 2023 | 1.35M€ | 1.27M€ | 1.43M€ |
+| January 2023 | 1.23M€ | 1.15M€ | 1.31M€ |
+| February 2023 | 1.18M€ | 1.10M€ | 1.26M€ |
+| March 2023 | 1.25M€ | 1.17M€ | 1.33M€ |
+| April 2023 | 1.20M€ | 1.12M€ | 1.28M€ |
+| May 2023 | 1.22M€ | 1.14M€ | 1.30M€ |
+| June 2023 | 1.19M€ | 1.11M€ | 1.27M€ |
+| July 2023 | 1.21M€ | 1.13M€ | 1.29M€ |
+| August 2023 | 1.17M€ | 1.09M€ | 1.25M€ |
+| September 2023 | 1.24M€ | 1.16M€ | 1.32M€ |
+| October 2023 | 1.26M€ | 1.18M€ | 1.34M€ |
+| November 2023 | 1.28M€ | 1.20M€ | 1.36M€ |
+| December 2023 | 1.35M€ | 1.27M€ | 1.43M€ |
 | **Total 2023** | **14.78M€** | — | — |
 
-**Comparaison Année-sur-Année**
-- **2022 réel** : ~14.10M€
-- **2023 prévision** : ~14.78M€
-- **Croissance estimée** : **+4.8%**
+**Year-over-Year Comparison**
+- **2022 actual**: ~14.10M€
+- **2023 forecast**: ~14.78M€
+- **Estimated growth**: **+4.8%**
 
 ---
 
-#### Résumé & Points Clés du ML
+#### ML Summary & Key Points
 
 | Aspect | Insight |
 | --- | --- |
-| **Meilleur modèle** | Holt-Winters (additif, tendance amortie) — MAPE **4.92%** |
-| **Meilleur modèle ML** | XGBoost — MAPE **5.56%** |
-| **Feature la plus importante** | `lag_12` (revenu du même mois l'année dernière) |
-| **Impact COVID** | Corrigé via STL decomposition + interpolation des résidus |
-| **Perspective 2023** | Croissance modérée de ~**4.8%** par rapport à 2022 |
-| **Significativité statistique** | Holt-Winters surpasse significativement Random Forest (p < 0.05) |
+| **Best model** | Holt-Winters (additive, damped trend) — MAPE **4.92%** |
+| **Best ML model** | XGBoost — MAPE **5.56%** |
+| **Most important feature** | `lag_12` (same month last year's revenue) |
+| **COVID impact** | Corrected via STL decomposition + residual interpolation |
+| **2023 outlook** | Moderate growth of ~**4.8%** compared to 2022 |
+| **Statistical significance** | Holt-Winters significantly outperforms Random Forest (p < 0.05) |
 
-> **Note** : `grocery_forecasting_v3.ipynb` dans `PowerBi_mining_ML/AI/` sert de notebook tableau de bord référençant l'ensemble du pipeline.
-
-## Screenshots
-
-Les captures d'écran sont organisées dans l'ordre du pipeline.
+> **Note**: `grocery_forecasting_v3.ipynb` in `PowerBI Version/PowerBi_mining_ML/AI/` serves as a dashboard notebook referencing the entire pipeline.
 
 ---
 
-### Étape 1 — Apache Hop (ETL Pipeline)
+# 💻 Approach 2 — Dashboard Version
 
-![Apache Hop Pipeline](PowerBi_mining_ML/Images/Apache%20Hop.png)
+A full-stack web application developed from scratch in code, reproducing all the dashboards and analytics from the Power BI approach using modern web technologies.
 
-### Étape 2 — Data Model (Star Schema PostgreSQL)
+### 2.1 Architecture
 
-![Data Model](PowerBi_mining_ML/Images/data%20model.png)
+```
+┌─────────────────────────────────────────────────┐
+│              Next.js (Frontend)                   │
+│     TypeScript · Tailwind CSS · Chart.js          │
+│     TanStack Query · shadcn/ui                    │
+├─────────────────────────────────────────────────┤
+│              FastAPI (Backend)                     │
+│     SQLAlchemy · Pydantic · Alembic               │
+├─────────────────────────────────────────────────┤
+│            PostgreSQL (Database)                   │
+│     Star Schema · Materialized Views · Indexes     │
+└─────────────────────────────────────────────────┘
+```
 
-### Étape 3 — Power BI Dashboards
+### 2.2 Tech Stack
+
+| Layer | Technologies |
+|-------|-------------|
+| **Frontend** | Next.js 14 (App Router), TypeScript, Tailwind CSS, Chart.js, TanStack Query, shadcn/ui |
+| **Backend** | Python FastAPI, SQLAlchemy ORM, Pydantic schemas, Alembic migrations |
+| **Database** | PostgreSQL 16 with materialized views and composite indexes |
+| **Infrastructure** | Docker Compose (3 services: frontend, backend, database) |
+| **ETL** | Python pandas-based pipeline with extractor, transformer, loader modules |
+
+### 2.3 Dashboard Pages
+
+#### 1. Sales Dashboard (Home)
+- **KPIs**: Revenue, Quantity, Transactions, Avg Basket, Customers, Products
+- **Charts**: Revenue Over Time (Line), Sales by Category (Doughnut), Monthly Seasonality (Bar), Top 10 Products (Horizontal Bar)
+
+#### 2. Product Analysis
+- Product KPIs, Price Distribution, Revenue by Category
+- Price vs Volume Matrix (Scatter Chart)
+
+#### 3. Customer Analysis
+- Customer Segmentation (VIP, Regular, Occasional, New)
+- Top Customers, Active Customers Over Time, Avg Basket by Segment
+
+#### 4. Employee Analysis
+- Top Employees, Performance by Age Group, Performance by Seniority
+- Revenue Distribution
+
+#### 5. Basket Analysis
+- Association Rules (Support, Confidence, Lift)
+- Adjustable threshold sliders, Support vs Lift Matrix
+- Sortable Rules Table
+
+### 2.4 API Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/dashboard/summary` | Complete dashboard data |
+| GET | `/api/sales/over-time` | Revenue time series |
+| GET | `/api/sales/by-category` | Sales by category |
+| GET | `/api/sales/monthly` | Monthly sales |
+| GET | `/api/products/` | All products |
+| GET | `/api/products/{id}` | Product detail |
+| GET | `/api/products/analytics/price-distribution` | Price distribution |
+| GET | `/api/products/analytics/price-volume-matrix` | Price vs volume |
+| GET | `/api/customers/segments` | Customer segments |
+| GET | `/api/customers/top` | Top customers |
+| GET | `/api/customers/activity` | Customer activity |
+| GET | `/api/employees/top` | Top employees |
+| GET | `/api/employees/performance/by-age` | Performance by age |
+| GET | `/api/employees/performance/by-seniority` | Performance by seniority |
+| GET | `/api/basket/analysis` | Basket analysis rules |
+| GET | `/api/filters/` | Filter options |
+| GET | `/api/health` | Health check |
+
+### 2.5 ETL Pipeline (Backend)
+
+The backend includes a complete Python ETL pipeline in `Dashboard Version/backend/app/etl/`:
+
+```text
+Extract (CSV files)
+    ↓
+Transform (pandas)
+    ├── Date cleaning & column standardization
+    ├── Dimension enrichment (city/country joins)
+    ├── Deduplication & sorting
+    └── dim_date generation from sales date range
+    ↓
+Load (PostgreSQL)
+    ├── Dim tables in FK order (category → product → customer → employee → date)
+    ├── fact_sales (~6.7M rows)
+    └── Refresh materialized views
+```
+
+### 2.6 Data Model
+
+Same star schema as Approach 1, with additional **materialized views** for performance:
+
+- `mv_daily_sales` — Daily aggregated sales
+- `mv_monthly_sales` — Monthly aggregated sales
+- `mv_customer_segmentation` — Customer segments (VIP, Regular, Occasional, New)
+- `mv_top_products` — Top selling products
+- `mv_employee_performance` — Employee performance metrics
+
+### 2.7 Quick Start
+
+#### With Docker
+
+```bash
+cd "Dashboard Version/docker"
+docker compose up -d
+```
+
+| Service | URL |
+|---------|-----|
+| Frontend | http://localhost:3000 |
+| Backend API | http://localhost:8000 |
+| API Docs | http://localhost:8000/api/docs |
+
+#### Without Docker
+
+```bash
+# Backend
+cd "Dashboard Version/backend"
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+uvicorn app.main:app --reload
+
+# Frontend
+cd "Dashboard Version/frontend"
+bun install
+bun run dev
+```
+
+---
+
+## Dataset
+
+The project uses the Grocery Sales dataset from Kaggle:
+
+```text
+https://www.kaggle.com/datasets/andrexibiza/grocery-sales-dataset
+```
+
+The dataset contains **6,690,599 sales transactions**, **98,759 customers**, **452 products**, **11 categories**, and **23 employees** — covering a period from January to May 2018.
+
+## Screenshots
+
+Screenshots are organized in pipeline order.
+
+---
+
+### Step 1 — Apache Hop (ETL Pipeline)
+
+![Apache Hop Pipeline](PowerBI%20Version/PowerBi_mining_ML/Images/Apache%20Hop.png)
+
+### Step 2 — Data Model (Star Schema PostgreSQL)
+
+![Data Model](PowerBI%20Version/PowerBi_mining_ML/Images/data%20model.png)
+
+### Step 3 — Power BI Dashboards
 
 #### Sales Dashboard
 
-![Sales Dashboard](PowerBi_mining_ML/Images/Capture%20d'%C3%A9cran%202026-06-03%20020525.png)
+![Sales Dashboard](PowerBI%20Version/PowerBi_mining_ML/Images/Capture%20d'%C3%A9cran%202026-06-03%20020525.png)
 
 #### Product Dashboard
 
-![Product Dashboard](PowerBi_mining_ML/Images/Capture%20d'%C3%A9cran%202026-06-03%20020535.png)
+![Product Dashboard](PowerBI%20Version/PowerBi_mining_ML/Images/Capture%20d'%C3%A9cran%202026-06-03%20020535.png)
 
 #### Customer Dashboard
 
-![Customer Dashboard](PowerBi_mining_ML/Images/Capture%20d'%C3%A9cran%202026-06-03%20020543.png)
+![Customer Dashboard](PowerBI%20Version/PowerBi_mining_ML/Images/Capture%20d'%C3%A9cran%202026-06-03%20020543.png)
 
 #### Employee Dashboard
 
-![Employee Dashboard](PowerBi_mining_ML/Images/Capture%20d'%C3%A9cran%202026-06-03%20020549.png)
+![Employee Dashboard](PowerBI%20Version/PowerBi_mining_ML/Images/Capture%20d'%C3%A9cran%202026-06-03%20020549.png)
 
-### Étape 4 — Basket Analysis Dashboard (Data Mining)
+### Step 4 — Basket Analysis Dashboard (Data Mining)
 
-![Basket Analysis Dashboard](PowerBi_mining_ML/Images/Capture%20d'%C3%A9cran%202026-06-03%20020602.png)
+![Basket Analysis Dashboard](PowerBI%20Version/PowerBi_mining_ML/Images/Capture%20d'%C3%A9cran%202026-06-03%20020602.png)
 
-### Étape 5 — Machine Learning (Forecasting)
+### Step 5 — Machine Learning (Forecasting)
 
-![Holt-Winters Forecast](PowerBi_mining_ML/AI/models/modele2_holtwinters.png)
-![XGBoost Forecast](PowerBi_mining_ML/AI/models/modele3_xgboost.png)
-![Random Forest Forecast](PowerBi_mining_ML/AI/models/modele4_random_forest.png)
-![Forecast 2023](PowerBi_mining_ML/AI/models/forecast_2023.png)
+![Holt-Winters Forecast](PowerBI%20Version/PowerBi_mining_ML/AI/models/modele2_holtwinters.png)
+![XGBoost Forecast](PowerBI%20Version/PowerBi_mining_ML/AI/models/modele3_xgboost.png)
+![Random Forest Forecast](PowerBI%20Version/PowerBi_mining_ML/AI/models/modele4_random_forest.png)
+![Forecast 2023](PowerBI%20Version/PowerBi_mining_ML/AI/models/forecast_2023.png)
 
 ## Getting Started
 
-### Prérequis
+### Approach 1 — Power BI Pipeline
+
+#### Prerequisites
 
 - Python 3.8+
 - PostgreSQL
@@ -666,56 +869,44 @@ Les captures d'écran sont organisées dans l'ordre du pipeline.
 - Power BI Desktop
 - Jupyter Notebook / VS Code
 
-### Installation rapide
+#### Step-by-Step
 
-```bash
-# Cloner le projet et se positionner
-cd PowerBi_mining_ML
+**Step 1 — Apache Hop (ETL)**
 
-# Installer les dépendances Python pour le ML
-pip install pandas numpy matplotlib seaborn scikit-learn statsmodels xgboost scipy
-```
-
----
-
-### Étape par étape
-
-#### Étape 1 — Apache Hop (ETL)
-
-**1.1** Télécharger le dataset Kaggle :
+1.1 Download the Kaggle dataset:
 ```text
 https://www.kaggle.com/datasets/andrexibiza/grocery-sales-dataset
 ```
 
-**1.2** (Optionnel) Inspecter et nettoyer les données dans `Data_Preprocessing/`.
+1.2 (Optional) Inspect and clean data in `PowerBI Version/PowerBi_mining_ML/Data_Preprocessing/`.
 
-**1.3** Ouvrir Apache Hop et charger le pipeline :
+1.3 Open Apache Hop and load the pipeline:
 ```text
-PowerBi_mining_ML/Apache HOP/Dimension_Pipline.hpl
+PowerBI Version/PowerBi_mining_ML/Apache HOP/Dimension_Pipline.hpl
 ```
 
-**1.4** Configurer :
-- Le chemin du fichier CSV source
-- La connexion PostgreSQL nommée `grocery_db`
-- Le schéma cible (public)
+1.4 Configure:
+- The CSV source file path
+- The PostgreSQL connection named `grocery_db`
+- The target schema (public)
 
-**1.5** Exécuter le pipeline.
+1.5 Run the pipeline.
 
 ---
 
-#### Étape 2 — PostgreSQL (Data Warehouse)
+**Step 2 — PostgreSQL (Data Warehouse)**
 
-**2.1** Créer la base de données PostgreSQL :
+2.1 Create the PostgreSQL database:
 ```bash
 psql -U postgres -c "CREATE DATABASE grocery_db;"
 ```
 
-**2.2** Exécuter le script de création des tables :
+2.2 Execute the table creation script:
 ```bash
-psql -d grocery_db -f "PowerBi_mining_ML/Apache HOP/SQL_Scripts.txt"
+psql -d grocery_db -f "PowerBI Version/PowerBi_mining_ML/Apache HOP/SQL_Scripts.txt"
 ```
 
-**2.3** Valider le chargement :
+2.3 Validate the data load:
 ```bash
 psql -d grocery_db -c "SELECT 'dim_category' AS tbl, COUNT(*) FROM dim_category
 UNION ALL SELECT 'dim_product', COUNT(*) FROM dim_product
@@ -726,141 +917,195 @@ UNION ALL SELECT 'fact_sales', COUNT(*) FROM fact_sales;"
 
 ---
 
-#### Étape 3 — Power BI (Dashboards)
+**Step 3 — Power BI (Dashboards)**
 
-**3.1** Ouvrir Power BI Desktop.
+3.1 Open Power BI Desktop.
 
-**3.2** Se connecter à la source de données :
-- **Option A** : PostgreSQL (via le connecteur PostgreSQL)
-- **Option B** : Fichier CSV dénormalisé
+3.2 Connect to the data source:
+- **Option A**: PostgreSQL (via the PostgreSQL connector)
+- **Option B**: Denormalized CSV file
 
-**3.3** Construire ou importer les dashboards selon la documentation :
-- [powerbi.md](PowerBi_mining_ML/Power%20bi/powerbi.md)
+3.3 Build or import dashboards following the documentation:
+- [powerbi.md](PowerBI%20Version/PowerBi_mining_ML/Power%20bi/powerbi.md)
 
-**3.4** Rafraîchir les données et explorer les visuels.
-
----
-
-#### Étape 4 — Data Mining (Basket Analysis)
-
-**4.1** Dans Power BI, appliquer les mesures DAX pour le Market Basket Analysis.
-
-**4.2** Calculer les métriques :
-- **Support** : fréquence des paires de produits
-- **Confiance** : probabilité conditionnelle
-- **Lift** : force de l'association
-
-**4.3** Document complet : [Basket_analysis_mining.md](PowerBi_mining_ML/Power%20bi/Basket_analysis_mining.md)
+3.4 Refresh data and explore visuals.
 
 ---
 
-#### Étape 5 — Machine Learning (Forecasting)
+**Step 4 — Data Mining (Basket Analysis)**
 
-Exécuter les notebooks dans l'ordre strict (chaque notebook dépend des sorties du précédent) :
+4.1 In Power BI, apply DAX measures for Market Basket Analysis.
+
+4.2 Calculate metrics:
+- **Support**: frequency of product pairs
+- **Confidence**: conditional probability
+- **Lift**: association strength
+
+4.3 Full documentation: [Basket_analysis_mining.md](PowerBI%20Version/PowerBi_mining_ML/Power%20bi/Basket_analysis_mining.md)
+
+---
+
+**Step 5 — Machine Learning (Forecasting)**
+
+Run the notebooks in strict order (each depends on previous outputs):
 
 ```text
-PowerBi_mining_ML/AI/models/01_Preprocessing.ipynb        # Étape 5.1
-PowerBi_mining_ML/AI/models/02_HoltWinters.ipynb           # Étape 5.2
-PowerBi_mining_ML/AI/models/03_XGBoost.ipynb               # Étape 5.3
-PowerBi_mining_ML/AI/models/04_RandomForest.ipynb          # Étape 5.4
-PowerBi_mining_ML/AI/models/05_Ensemble_Comparaison.ipynb  # Étape 5.5
-PowerBi_mining_ML/AI/models/06_Forecast_2023.ipynb         # Étape 5.6
+"PowerBI Version/PowerBi_mining_ML/AI/models/01_Preprocessing.ipynb"
+"PowerBI Version/PowerBi_mining_ML/AI/models/02_HoltWinters.ipynb"
+"PowerBI Version/PowerBi_mining_ML/AI/models/03_XGBoost.ipynb"
+"PowerBI Version/PowerBi_mining_ML/AI/models/04_RandomForest.ipynb"
+"PowerBI Version/PowerBi_mining_ML/AI/models/05_Ensemble_Comparaison.ipynb"
+"PowerBI Version/PowerBi_mining_ML/AI/models/06_Forecast_2023.ipynb"
 ```
 
-**Packages Python requis** (installés automatiquement par le notebook 01) :
+**Required Python packages** (auto-installed by notebook 01):
 ```bash
 pip install pandas numpy matplotlib seaborn scikit-learn statsmodels xgboost scipy
 ```
 
-## Recommended Workflow
+---
 
-Pour une reproduction complète du projet, suivez les étapes dans l'ordre :
+### Approach 2 — Dashboard Version (Code)
 
-```text
-Étape 1 : Apache Hop (ETL)
-    ↓
-Étape 2 : PostgreSQL (Data Warehouse)
-    ↓
-Étape 3 : Power BI (Dashboards)
-    ↓
-Étape 4 : Data Mining (Basket Analysis)
-    ↓
-Étape 5 : Machine Learning (Forecasting)
+#### With Docker
+
+```bash
+cd "Dashboard Version/docker"
+docker compose up -d
 ```
 
-### Workflow détaillé
+| Service | URL |
+|---------|-----|
+| Frontend | http://localhost:3000 |
+| Backend API | http://localhost:8000 |
+| API Docs | http://localhost:8000/api/docs |
 
-| # | Étape | Action | Référence |
-| --- | --- | --- | --- |
-| **1** | **Apache Hop** | Télécharger le dataset Kaggle → Nettoyage dans `Data_Preprocessing/` → Générer le CSV dénormalisé → Configurer et exécuter le pipeline Hop | [`Dimension_Pipline_README.md`](PowerBi_mining_ML/Apache%20HOP/Dimension_Pipline_README.md) |
-| **2** | **PostgreSQL** | Créer la base de données → Exécuter `SQL_Scripts.txt` → Valider les comptes de lignes dans chaque table | [`SQL_Scripts.txt`](PowerBi_mining_ML/Apache%20HOP/SQL_Scripts.txt) |
-| **3** | **Power BI** | Connecter Power BI au warehouse PostgreSQL → Construire les dashboards (Sales, Product, Customer, Employee) | [`powerbi.md`](PowerBi_mining_ML/Power%20bi/powerbi.md) |
-| **4** | **Data Mining** | Appliquer les mesures DAX de Market Basket Analysis → Analyser Support, Confidence, Lift → Identifier les associations produits | [`Basket_analysis_mining.md`](PowerBi_mining_ML/Power%20bi/Basket_analysis_mining.md) |
-| **5** | **ML** | Exécuter les notebooks dans l'ordre : 01_Preprocessing → 02_HoltWinters → 03_XGBoost → 04_RandomForest → 05_Ensemble → 06_Forecast | [`AI/models/`](PowerBi_mining_ML/AI/models/) |
+#### Without Docker
+
+```bash
+# 1. Database
+sudo systemctl start postgresql
+sudo -u postgres psql -c "CREATE DATABASE grocery_sales;"
+sudo -u postgres psql -c "ALTER USER postgres PASSWORD 'postgres';"
+sudo -u postgres psql -d grocery_sales -f "Dashboard Version/database/schema.sql"
+
+# 2. Backend
+cd "Dashboard Version/backend"
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+
+# 3. Frontend (in another terminal)
+cd "Dashboard Version/frontend"
+bun install
+bun run dev
+
+# 4. Import CSV data
+cd "Dashboard Version/backend"
+source .venv/bin/activate
+python scripts/load_all_data.py
+```
+
+---
+
+## Recommended Workflow
+
+### Approach 1 — Power BI
+
+```text
+Step 1 : Apache Hop (ETL) → Step 2 : PostgreSQL → Step 3 : Power BI (Dashboards)
+→ Step 4 : Data Mining (Basket Analysis) → Step 5 : Machine Learning (Forecasting)
+```
+
+### Approach 2 — Dashboard Version
+
+```text
+1. Setup PostgreSQL database → 2. Run ETL (load CSV data)
+→ 3. Start FastAPI backend → 4. Start Next.js frontend
+→ 5. Open http://localhost:3000
+```
+
+---
 
 ## Technologies Used
 
-| Area | Tools |
+| Area | Technologies |
 | --- | --- |
-| Data preprocessing | Python, pandas, NumPy, Jupyter notebooks |
-| ETL | Apache Hop |
-| Database | PostgreSQL |
-| BI and visualization | Power BI, DAX |
-| Data mining | Market Basket Analysis, support, confidence, lift |
-| Statistical modeling | Holt-Winters (Triple Exponential Smoothing), STL decomposition |
-| Machine learning | XGBoost, Random Forest, Scikit-learn |
-| Ensemble methods | Weighted blending (inverse MAPE weighting) |
-| Model evaluation | MAE, RMSE, MAPE, sMAPE, R², MASE, Diebold-Mariano test |
-| Statistical inference | Bootstrap confidence intervals, STL interpolation |
-| Visualization | Matplotlib, Seaborn |
+| **Data preprocessing** | Python, pandas, NumPy, Jupyter notebooks |
+| **ETL (Power BI)** | Apache Hop |
+| **ETL (Dashboard)** | Python pandas pipeline (extractor, transformer, loader) |
+| **Database** | PostgreSQL 16, SQLAlchemy, Alembic |
+| **BI & Visualization (Power BI)** | Power BI, DAX, Market Basket Analysis |
+| **BI & Visualization (Web)** | Next.js 14, TypeScript, Tailwind CSS, Chart.js, shadcn/ui |
+| **Backend API** | FastAPI, Pydantic, SQLAlchemy |
+| **Infrastructure** | Docker Compose |
+| **Statistical modeling** | Holt-Winters (Triple Exponential Smoothing), STL decomposition |
+| **Machine learning** | XGBoost, Random Forest, Scikit-learn |
+| **Ensemble methods** | Weighted blending (inverse MAPE weighting) |
+| **Model evaluation** | MAE, RMSE, MAPE, sMAPE, R², MASE, Diebold-Mariano test |
+| **Statistical inference** | Bootstrap confidence intervals, STL interpolation |
+| **Visualization (ML)** | Matplotlib, Seaborn |
+
+---
 
 ## Troubleshooting
 
-### 🖼️ Les images ne s'affichent pas
+### 🖼️ Images not displaying
 
-Certains noms de captures d'écran contiennent des espaces et des caractères accentués. Ouvrez-les directement depuis le dossier `Images/`.
+Some screenshot filenames contain spaces and accented characters. Open them directly from the `PowerBI Version/PowerBi_mining_ML/Images/` folder.
 
-### ⚙️ Étape 1 — Apache Hop ne trouve pas le fichier CSV
+### ⚙️ Step 1 — Apache Hop cannot find CSV file
 
-Vérifiez le chemin du fichier dans le transform `CSV file input`. Utilisez un chemin absolu si Apache Hop s'exécute depuis un répertoire différent.
+Check the file path in the `CSV file input` transform. Use an absolute path if Apache Hop runs from a different directory.
 
-### 🗄️ Étape 2 — La connexion à la base de données échoue
+### 🗄️ Step 2 — Database connection fails
 
-Vérifiez :
-- PostgreSQL est en cours d'exécution.
-- Le nom de la base est `grocery_db` ou correspond à votre connexion Hop.
-- Le nom d'utilisateur et le mot de passe sont corrects.
-- Les tables cibles existent avant d'exécuter le pipeline.
+Check:
+- PostgreSQL is running.
+- The database name matches your Hop connection (`grocery_db`).
+- Username and password are correct.
+- Target tables exist before running the pipeline.
 
-### 🔄 Étape 2 — Lignes en double après réexécution de l'ETL
+### 🔄 Step 2 — Duplicate rows after ETL re-execution
 
-Les sorties Hop sont configurées sans troncature automatique. Avant de réexécuter le pipeline, tronquez les tables manuellement ou implémentez une stratégie upsert.
+Hop outputs are configured without auto-truncation. Before re-running the pipeline, truncate tables manually or implement an upsert strategy.
 
-### 📊 Étape 3 — Power BI ne trouve pas les données
+### 📊 Step 3 — Power BI cannot find data
 
-- Vérifiez que la connexion PostgreSQL est active.
-- Vous pouvez aussi utiliser le fichier CSV dénormalisé comme source alternative.
+- Verify the PostgreSQL connection is active.
+- You can also use the denormalized CSV file as an alternative source.
 
-### 🤖 Étape 5 — Le notebook de preprocessing échoue car un CSV est manquant
+### 🤖 Step 5 — Preprocessing notebook fails due to missing CSV
 
-Le notebook 01 attend le fichier `daily_revenue.csv` en entrée. Exécutez les notebooks dans l'ordre :
+Notebook 01 expects `daily_revenue.csv` as input. Run notebooks in order:
 ```text
-01_Preprocessing.ipynb  →  génère prepared_data.csv, train_data.csv, test_data.csv
-02_HoltWinters.ipynb    →  nécessite prepared_data.csv
-03_XGBoost.ipynb        →  nécessite prepared_data.csv
+01_Preprocessing.ipynb → generates prepared_data.csv, train_data.csv, test_data.csv
+02_HoltWinters.ipynb   → requires prepared_data.csv
+03_XGBoost.ipynb       → requires prepared_data.csv
 ...
 ```
 
+### 🐳 Docker — Port already in use
+
+If ports 3000, 8000, or 5432 are already in use, modify the port mappings in `Dashboard Version/docker/docker-compose.yml`.
+
+---
+
 ## Future Improvements
 
-- **Étape 1** : Ajouter un script automatisé pour télécharger et préparer le dataset Kaggle.
-- **Étape 1** : Ajouter un mode upsert ou truncate-load au pipeline Apache Hop.
-- **Étape 2** : Ajouter des tests de qualité des données (nulls, doublons, dates, clés étrangères).
-- **Étape 3** : Ajouter la documentation du fichier `.pbix` Power BI.
-- **Étape 5** : Exporter les modèles ML entraînés (artefacts).
-- **Global** : Ajouter un script d'orchestration unique pour les 5 étapes.
-- **Global** : Fichiers d'environnement reproductibles (`requirements.txt`, `environment.yml`).
-- **Global** : Documentation pour l'actualisation automatisée des dashboards.
+- **Step 1**: Add an automated script to download and prepare the Kaggle dataset.
+- **Step 1**: Add an upsert or truncate-load mode to the Apache Hop pipeline.
+- **Step 2**: Add data quality tests (nulls, duplicates, dates, foreign keys).
+- **Step 3**: Add documentation for the `.pbix` Power BI file.
+- **Step 5**: Export trained ML models as artifacts.
+- **Approach 2**: Add authentication and user management to the web dashboard.
+- **Approach 2**: Add real-time data refresh capabilities.
+- **Global**: Add a single orchestration script for all 5 Power BI pipeline steps.
+- **Global**: Reproducible environment files (`requirements.txt`, `environment.yml`).
+- **Global**: Documentation for automated dashboard refresh scheduling.
+
+---
 
 ## Author and Date
 
