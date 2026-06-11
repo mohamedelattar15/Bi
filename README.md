@@ -669,109 +669,242 @@ Revenue forecast for **12 months in 2023** using the champion Holt-Winters model
 
 # 💻 Approach 2 — Dashboard Version
 
-A full-stack web application developed from scratch in code, reproducing all the dashboards and analytics from the Power BI approach using modern web technologies.
+A full-stack web application developed from scratch in code, reproducing all the dashboards and analytics from the Power BI approach using modern web technologies. Built with a **layered architecture** separating concerns across frontend, API, business logic, data access, and database layers.
+
+> **Detailed documentation**: See [`Dashboard Version/README.md`](Dashboard%20Version/README.md), [`Dashboard Version/backend/README.md`](Dashboard%20Version/backend/README.md), [`Dashboard Version/frontend/README.md`](Dashboard%20Version/frontend/README.md), and [`Dashboard Version/ARCHITECTURE.md`](Dashboard%20Version/ARCHITECTURE.md).
 
 ### 2.1 Architecture
 
 ```
-┌─────────────────────────────────────────────────┐
-│              Next.js (Frontend)                   │
-│     TypeScript · Tailwind CSS · Chart.js          │
-│     TanStack Query · shadcn/ui                    │
-├─────────────────────────────────────────────────┤
-│              FastAPI (Backend)                     │
-│     SQLAlchemy · Pydantic · Alembic               │
-├─────────────────────────────────────────────────┤
-│            PostgreSQL (Database)                   │
-│     Star Schema · Materialized Views · Indexes     │
-└─────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────┐
+│              NEXT.JS (Frontend Layer)                 │
+│  TypeScript · Tailwind CSS · Recharts                │
+│  TanStack Query · shadcn/ui · Lucide Icons           │
+├──────────────────────────────────────────────────────┤
+│              FASTAPI (API Layer)                      │
+│  8 routers: dashboard, sales, products, customers,   │
+│  employees, basket, filters, insights                 │
+├──────────────────────────────────────────────────────┤
+│              SERVICES (Business Logic Layer)           │
+│  DashboardService · ProductService · CustomerService  │
+│  EmployeeService · BasketService                      │
+├──────────────────────────────────────────────────────┤
+│            REPOSITORY (Data Access Layer)              │
+│  DashboardRepository — all analytical SQL queries     │
+├──────────────────────────────────────────────────────┤
+│          SQLALCHEMY MODELS (ORM Layer)                │
+│  DimCategory · DimProduct · DimCustomer · DimEmployee │
+│  DimDate · FactSales                                  │
+├──────────────────────────────────────────────────────┤
+│           POSTGRESQL (Database Layer)                 │
+│  Star Schema · 5 Materialized Views · 15+ Indexes    │
+└──────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────┐
+│              ETL PIPELINE (Sidecar)                    │
+│  Extractor → Transformer → Validator → Loader → Sync │
+│  Reads CSV → Cleans/Enriches → Loads to PostgreSQL    │
+└──────────────────────────────────────────────────────┘
 ```
 
 ### 2.2 Tech Stack
 
 | Layer | Technologies |
 |-------|-------------|
-| **Frontend** | Next.js 14 (App Router), TypeScript, Tailwind CSS, Chart.js, TanStack Query, shadcn/ui |
-| **Backend** | Python FastAPI, SQLAlchemy ORM, Pydantic schemas, Alembic migrations |
+| **Frontend** | Next.js 14 (App Router), TypeScript, Tailwind CSS, Recharts, TanStack Query, shadcn/ui, Lucide React |
+| **Backend** | Python FastAPI, SQLAlchemy ORM, Pydantic v2 schemas, Alembic |
 | **Database** | PostgreSQL 16 with materialized views and composite indexes |
 | **Infrastructure** | Docker Compose (3 services: frontend, backend, database) |
-| **ETL** | Python pandas-based pipeline with extractor, transformer, loader modules |
+| **ETL** | Python pandas-based pipeline (extractor, transformer, validator, loader, sync) |
 
 ### 2.3 Dashboard Pages
 
-#### 1. Sales Dashboard (Home)
-- **KPIs**: Revenue, Quantity, Transactions, Avg Basket, Customers, Products
-- **Charts**: Revenue Over Time (Line), Sales by Category (Doughnut), Monthly Seasonality (Bar), Top 10 Products (Horizontal Bar)
+#### 1. Sales Dashboard (Home) — `/`
+| KPIs | Charts | Insights |
+|------|--------|----------|
+| Total Revenue, Total Profit, Qty Sold, Transactions, Profit Margin, Avg Basket | Revenue & Profit Trend (Combo), MoM Growth % (Bar), Category Treemap, Pareto Table, Top Customers/Employees, Revenue by Day, Product Class (Doughnut) | 15+ API calls, date-range filtering, expandable charts, hover tooltips |
 
-#### 2. Product Analysis
-- Product KPIs, Price Distribution, Revenue by Category
-- Price vs Volume Matrix (Scatter Chart)
+#### 2. Product Analysis — `/products`
+| KPIs | Charts | Insights |
+|------|--------|----------|
+| Total Products, Categories, Avg Price, Total Revenue, Top Category % | Category Treemap, Price Distribution (Bar), Price vs Volume (Scatter), Category Growth (Combo), Pareto Concentration (Table) | 80/20 analysis, category breakdown |
 
-#### 3. Customer Analysis
-- Customer Segmentation (VIP, Regular, Occasional, New)
-- Top Customers, Active Customers Over Time, Avg Basket by Segment
+#### 3. Customer Analysis — `/customers`
+| KPIs | Charts | Insights |
+|------|--------|----------|
+| Total/Active Customers, Loyalty Rate, Avg Basket, Repurchase Rate | RFM Segmentation (Doughnut), Top Customers (Table), Customer Activity (Combo), City Treemap, Health Dashboard (Cards) | 6 RFM segments, geographic distribution, loyalty metrics |
 
-#### 4. Employee Analysis
-- Top Employees, Performance by Age Group, Performance by Seniority
-- Revenue Distribution
+#### 4. Employee Analysis — `/employees`
+| KPIs | Charts | Insights |
+|------|--------|----------|
+| Total Employees, Total Revenue, Avg Revenue/Employee | Top 5 (Bar), Performance Table, By Age/Seniority (Bar), Age/Gender Distribution (Doughnut) | Demographic breakdown, uniform performance pattern |
 
-#### 5. Basket Analysis
-- Association Rules (Support, Confidence, Lift)
-- Adjustable threshold sliders, Support vs Lift Matrix
-- Sortable Rules Table
+#### 5. Basket Analysis — `/basket-analysis`
+| KPIs | Controls | Charts |
+|------|----------|--------|
+| Total Baskets, Products, Association Rules, Strong Rules | Min Support (0.001%–1%) and Min Lift (1.0–3.0) sliders | Top 10 Pairs (Bar), Support vs Lift Matrix (Scatter), Rules Table |
 
 ### 2.4 API Endpoints
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/dashboard/summary` | Complete dashboard data |
-| GET | `/api/sales/over-time` | Revenue time series |
-| GET | `/api/sales/by-category` | Sales by category |
-| GET | `/api/sales/monthly` | Monthly sales |
-| GET | `/api/products/` | All products |
-| GET | `/api/products/{id}` | Product detail |
-| GET | `/api/products/analytics/price-distribution` | Price distribution |
-| GET | `/api/products/analytics/price-volume-matrix` | Price vs volume |
-| GET | `/api/customers/segments` | Customer segments |
-| GET | `/api/customers/top` | Top customers |
-| GET | `/api/customers/activity` | Customer activity |
-| GET | `/api/employees/top` | Top employees |
-| GET | `/api/employees/performance/by-age` | Performance by age |
-| GET | `/api/employees/performance/by-seniority` | Performance by seniority |
-| GET | `/api/basket/analysis` | Basket analysis rules |
-| GET | `/api/filters/` | Filter options |
-| GET | `/api/health` | Health check |
+| Method | Endpoint | Description | Query Parameters |
+|--------|----------|-------------|-----------------|
+| `GET` | `/api/dashboard/summary` | Dashboard KPIs + chart data | `start_date`, `end_date` |
+| `GET` | `/api/sales/over-time` | Revenue time series | `start_date`, `end_date`, `category` |
+| `GET` | `/api/sales/by-category` | Sales by category | `start_date`, `end_date`, `product` |
+| `GET` | `/api/sales/monthly` | Monthly sales | `start_date`, `end_date`, `category`, `employee` |
+| `GET` | `/api/sales/by-city` | Revenue by city | `start_date`, `end_date` |
+| `GET` | `/api/sales/ca-growth-by-year` | Year-over-year growth | `start_date`, `end_date` |
+| `GET` | `/api/sales/by-class` | Sales by product class | `start_date`, `end_date` |
+| `GET` | `/api/products/` | All products with revenue | `start_date`, `end_date` |
+| `GET` | `/api/products/{id}` | Product detail | — |
+| `GET` | `/api/products/analytics/price-distribution` | Price range buckets | `start_date`, `end_date` |
+| `GET` | `/api/products/analytics/price-volume-matrix` | Price vs volume scatter | `start_date`, `end_date` |
+| `GET` | `/api/products/analytics/category-growth` | Category growth trends | `start_date`, `end_date` |
+| `GET` | `/api/customers/segments` | Customer segments | — |
+| `GET` | `/api/customers/top` | Top customers | `limit` |
+| `GET` | `/api/customers/activity` | Customer activity over time | `start_date`, `end_date` |
+| `GET` | `/api/customers/avg-basket-by-city` | Avg basket by city | `start_date`, `end_date` |
+| `GET` | `/api/customers/growth-by-city` | City growth metrics | `start_date`, `end_date` |
+| `GET` | `/api/customers/loyalty-stats` | Loyalty & retention stats | `start_date`, `end_date` |
+| `GET` | `/api/employees/top` | Top employees | `limit`, `start_date`, `end_date` |
+| `GET` | `/api/employees/performance/by-age` | Performance by age | `start_date`, `end_date` |
+| `GET` | `/api/employees/performance/by-seniority` | Performance by seniority | `start_date`, `end_date` |
+| `GET` | `/api/employees/demographics/gender` | Gender distribution | — |
+| `GET` | `/api/employees/demographics/age-category` | Age categories | — |
+| `GET` | `/api/employees/ca-by-age-tranche` | Revenue by age tranche | `start_date`, `end_date` |
+| `GET` | `/api/basket/analysis` | Market basket analysis | `min_support`, `min_lift`, `limit`, `start_date`, `end_date` |
+| `GET` | `/api/filters/` | Dynamic filter options | — |
+| `GET` | `/api/insights/revenue-concentration` | Herfindahl index | — |
+| `GET` | `/api/insights/revenue-by-day` | Revenue by day of week | — |
+| `GET` | `/api/insights/month-over-month` | MoM growth percentages | — |
+| `GET` | `/api/insights/pareto-products` | 80/20 product analysis | `limit`, `start_date`, `end_date` |
+| `GET` | `/api/insights/growth-metrics` | Profit & growth metrics | `start_date`, `end_date` |
+| `GET` | `/api/insights/customer-rfm` | RFM segmentation | — |
+| `GET` | `/api/insights/geographic-distribution` | Country-level breakdown | — |
+| `GET` | `/api/health` | Health check | — |
 
-### 2.5 ETL Pipeline (Backend)
+### 2.5 Backend Architecture
 
-The backend includes a complete Python ETL pipeline in `Dashboard Version/backend/app/etl/`:
+The backend follows a **clean layered architecture**:
+
+| Layer | Directory | Responsibility |
+|-------|-----------|----------------|
+| **API** | `app/api/` | 8 FastAPI routers — HTTP request handling, validation, response serialization |
+| **Services** | `app/services/` | 5 service classes — business logic, caching orchestration |
+| **Repository** | `app/repositories/` | 1 repository — all analytical SQL queries |
+| **Models** | `app/models/` | 6 SQLAlchemy ORM models — star schema mapping |
+| **Schemas** | `app/schemas/` | Pydantic v2 models — request/response validation |
+| **ETL** | `app/etl/` | 6 modules — full data pipeline (extract → transform → validate → load → sync) |
+| **Core** | `app/core/` | Configuration, database engine, session management |
+| **Utils** | `app/utils/` | In-memory cache decorator, formatting helpers |
+
+#### ETL Pipeline
 
 ```text
-Extract (CSV files)
+Extract (7 CSV files, 6.7M rows)
     ↓
 Transform (pandas)
-    ├── Date cleaning & column standardization
-    ├── Dimension enrichment (city/country joins)
-    ├── Deduplication & sorting
-    └── dim_date generation from sales date range
+    ├── Date cleaning (parse, floor to seconds, drop nulls ~1%)
+    ├── Column standardization (snake_case rename)
+    ├── Dimension enrichment (city/country/category joins)
+    ├── Date generation (dim_date from sales date range)
+    └── Fact cleaning
+    ↓
+Validate (DataValidator)
+    ├── PK uniqueness 🔴
+    ├── NOT NULL checks 🔴
+    ├── Positive prices/quantities 🔴
+    └── FK referential integrity 🔴
     ↓
 Load (PostgreSQL)
-    ├── Dim tables in FK order (category → product → customer → employee → date)
-    ├── fact_sales (~6.7M rows)
-    └── Refresh materialized views
+    ├── INSERT for ≤100K rows
+    ├── COPY for >100K rows (10-50x faster)
+    ├── FK load order: category → product → customer → employee → date → fact_sales
+    └── Refresh 5 materialized views
+    ↓
+Sync (health checks)
+    ├── Table existence
+    ├── Row count thresholds
+    ├── FK integrity
+    └── Schema drift detection
 ```
 
 ### 2.6 Data Model
 
-Same star schema as Approach 1, with additional **materialized views** for performance:
+Same **star schema** as Approach 1, with these materialized views:
 
-- `mv_daily_sales` — Daily aggregated sales
-- `mv_monthly_sales` — Monthly aggregated sales
-- `mv_customer_segmentation` — Customer segments (VIP, Regular, Occasional, New)
-- `mv_top_products` — Top selling products
-- `mv_employee_performance` — Employee performance metrics
+| View | Purpose | Aggregation Level |
+|------|---------|-------------------|
+| `mv_daily_sales` | Base KPI queries, time series | Day + Product + Employee + Customer |
+| `mv_monthly_sales` | Monthly trends, YoY comparison | Month + Category + Gender + Country |
+| `mv_customer_segmentation` | Customer dashboard | Customer-level |
+| `mv_top_products` | Product ranking | Product-level |
+| `mv_employee_performance` | Employee metrics | Employee-level |
+| `mv_daily_baskets` | Basket analysis (customer+date) | Basket-level (6.69M rows) |
 
-### 2.7 Quick Start
+### 2.7 Frontend Highlights
+
+| Feature | Implementation |
+|---------|---------------|
+| **Chart library** | 10 Recharts wrappers (Bar, Doughnut, Combo, Treemap, Scatter, Area, Stacked, Heatmap, Waterfall, Gauge) |
+| **State management** | TanStack React Query with 5–10 min stale times, automatic deduplication |
+| **Value formatting** | Compact notation: `€4.4B`, `€650M`, `€650.71` — hover for full value |
+| **Color-by-value** | Green/red bars and dots for growth/decline indicators |
+| **Responsive grid** | 1→2→3→6 columns for KPIs, 1→2 columns for charts |
+| **Loading states** | Skeleton placeholders for all pages |
+| **Error handling** | User-friendly messages when backend is unreachable |
+
+### 2.8 Screenshots
+
+#### Sales Performance Dashboard
+
+![Sales Dashboard](Dashboard%20Version/screenshots/sale_performance.png)
+
+*Home page with KPI cards, revenue trends, category analysis, customer/employee tables, and operational insights.*
+
+---
+
+#### Product Performance
+
+![Product Dashboard](Dashboard%20Version/screenshots/product_performance.png)
+
+*Product portfolio analysis with price distribution, category breakdown, and Pareto 80/20 concentration table.*
+
+---
+
+#### Customer Performance
+
+![Customer Dashboard](Dashboard%20Version/screenshots/customer_performance.png)
+
+*Customer analytics with RFM segmentation, geographic treemap, city growth table, and loyalty health dashboard.*
+
+---
+
+#### Employee Performance
+
+![Employee Dashboard](Dashboard%20Version/screenshots/employee_performance.png)
+
+*Sales team analysis with top performers, performance by age/seniority, and demographic distributions.*
+
+---
+
+#### Basket Analysis
+
+![Basket Analysis](Dashboard%20Version/screenshots/basket_analysis.png)
+
+*Market basket analysis with interactive threshold sliders, top product associations, support vs lift matrix, and association rules table.*
+
+---
+
+#### Expandable Charts
+
+![Expandable Chart Modal](Dashboard%20Version/screenshots/modal_for_each_chart.png)
+
+*Every chart can be expanded to full-screen for detailed analysis with hover tooltips.*
+
+---
+
+### 2.9 Quick Start
 
 #### With Docker
 
@@ -788,15 +921,35 @@ docker compose up -d
 
 #### Without Docker
 
-```bash
-# Backend
-cd "Dashboard Version/backend"
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-uvicorn app.main:app --reload
+Full setup guide: [`Dashboard Version/SETUP_LOCAL.md`](Dashboard%20Version/SETUP_LOCAL.md)
 
-# Frontend
+```bash
+# 1. Database
+sudo systemctl start postgresql
+sudo -u postgres psql -c "CREATE DATABASE grocery_sales;"
+sudo -u postgres psql -c "ALTER USER postgres PASSWORD 'postgres';"
+sudo -u postgres psql -d grocery_sales -f "Dashboard Version/database/schema.sql"
+
+# 2. Backend
+cd "Dashboard Version/backend"
+python3 -m venv .venv
+source .venv/bin/activate
+pip install --only-binary :all: -r requirements.txt
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+
+# 3. Import data
+cd "Dashboard Version/backend"
+source .venv/bin/activate
+python scripts/load_all_data.py
+
+# 4. Create MV for basket analysis (required)
+PGPASSWORD=postgres psql -h localhost -U postgres -d grocery_sales -c "
+CREATE MATERIALIZED VIEW IF NOT EXISTS mv_daily_baskets AS
+SELECT DISTINCT customerid, CONCAT(customerid,'|',date) AS basket_id, productid FROM fact_sales;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_mv_db ON mv_daily_baskets(customerid, basket_id, productid);
+CREATE INDEX IF NOT EXISTS idx_mv_db_basket ON mv_daily_baskets(basket_id);"
+
+# 5. Frontend
 cd "Dashboard Version/frontend"
 bun install
 bun run dev
