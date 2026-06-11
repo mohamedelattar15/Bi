@@ -43,13 +43,11 @@ class BasketService:
             for r in rules
         ]
 
-        total_transactions = int(
-            self.repo.get_all_kpis()["total_transactions"]
-        )
+        total_baskets = self.repo.get_basket_total_baskets(start_date, end_date)
         total_products = self.repo.get_basket_total_products()
 
         return BasketAnalysisResult(
-            total_transactions=total_transactions,
+            total_transactions=total_baskets,
             total_products=total_products,
             min_support=Decimal(str(min_support)),
             min_lift=Decimal(str(min_lift)),

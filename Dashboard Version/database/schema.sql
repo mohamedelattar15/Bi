@@ -146,6 +146,7 @@
     CREATE INDEX idx_fact_sales_date_product ON fact_sales(date, productid);
     CREATE INDEX idx_fact_sales_date_employee ON fact_sales(date, employeeid);
     CREATE INDEX idx_fact_sales_date_customer ON fact_sales(date, customerid);
+    CREATE INDEX idx_fact_sales_transaction_product ON fact_sales(transactionnumber, productid);
 
     -- ==========================================
     -- 7. MATERIALIZED VIEWS (Performance Optimization)

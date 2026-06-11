@@ -38,6 +38,19 @@ export function KPICard({
     return formatCompactNumber(value);
   };
 
+  /** Full non-abbreviated value for the hover tooltip */
+  const fullValueLabel = (): string => {
+    const num = typeof value === "string" ? parseFloat(value) : value;
+    if (format === "currency") {
+      return `€${num.toLocaleString("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })}`;
+    }
+    if (format === "percentage") return `${num.toFixed(1)}%`;
+    return num.toLocaleString("en-US");
+  };
+
   const TrendIcon = () => {
     if (trend_direction === "up")
       return <TrendingUp className="h-4 w-4 text-green-500" />;
@@ -59,7 +72,10 @@ export function KPICard({
         )}
       </CardHeader>
       <CardContent>
-        <div className="text-3xl font-bold tracking-tight text-foreground">
+        <div
+          className="text-3xl font-bold tracking-tight text-foreground"
+          title={fullValueLabel()}
+        >
           {prefix}
           {formattedValue()}
           {suffix}

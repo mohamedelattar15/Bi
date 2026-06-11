@@ -5,20 +5,42 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-/** Format a number as currency */
-export function formatCurrency(value: number, currency = "€"): string {
-  return `${currency}${value.toLocaleString("en-US", {
+/** Format a number as currency with smart compact notation.
+ *
+ * Handles both `number` and `string` values (backend sends Decimal as string).
+ *
+ * - Values >= 1B → "€X.XB"
+ * - Values >= 1M → "€X.XM"
+ * - Values >= 1K → "€X.XK"
+ * - Otherwise    → "€X,XXX.XX"
+ */
+export function formatCurrency(value: number | string, currency = "€"): string {
+  const num = typeof value === "string" ? parseFloat(value) : value;
+  if (num >= 1_000_000_000) {
+    return `${currency}${(num / 1_000_000_000).toFixed(1)}B`;
+  }
+  if (num >= 1_000_000) {
+    return `${currency}${(num / 1_000_000).toFixed(1)}M`;
+  }
+  if (num >= 1_000) {
+    return `${currency}${(num / 1_000).toFixed(1)}K`;
+  }
+  return `${currency}${num.toLocaleString("en-US", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })}`;
 }
 
-/** Format a large number with abbreviature */
-export function formatCompactNumber(value: number): string {
-  if (value >= 1_000_000_000) return `${(value / 1_000_000_000).toFixed(1)}B`;
-  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
-  if (value >= 1_000) return `${(value / 1_000).toFixed(1)}K`;
-  return value.toString();
+/** Format a large number with compact notation.
+ *
+ * Handles both `number` and `string` values.
+ */
+export function formatCompactNumber(value: number | string): string {
+  const num = typeof value === "string" ? parseFloat(value) : value;
+  if (num >= 1_000_000_000) return `${(num / 1_000_000_000).toFixed(1)}B`;
+  if (num >= 1_000_000) return `${(num / 1_000_000).toFixed(1)}M`;
+  if (num >= 1_000) return `${(num / 1_000).toFixed(1)}K`;
+  return num.toString();
 }
 
 /** Format percentage */

@@ -87,14 +87,20 @@ export default function SalesDashboardPage() {
   const rfmColors: Record<string, string> = {
     Champions: "text-green-600 bg-green-50",
     Loyal: "text-blue-600 bg-blue-50",
-    "At Risk": "text-amber-600 bg-amber-50",
-    "Needs Attention": "text-orange-600 bg-orange-50",
-    "Can't Lose": "text-red-600 bg-red-50",
-    Promising: "text-purple-600 bg-purple-50",
-    New: "text-cyan-600 bg-cyan-50",
-    Hibernating: "text-slate-600 bg-slate-50",
-    "About to Sleep": "text-yellow-600 bg-yellow-50",
-    Lost: "text-gray-400 bg-gray-50",
+    "Big Spenders": "text-indigo-600 bg-indigo-50",
+    "Frequent Buyers": "text-teal-600 bg-teal-50",
+    Average: "text-gray-600 bg-gray-50",
+    "At Risk": "text-red-600 bg-red-50",
+  };
+
+  /** One-line description of what each RFM segment means */
+  const rfmExplanations: Record<string, string> = {
+    Champions: "biggest spenders, buy most often",
+    Loyal: "high spend, good frequency",
+    "Big Spenders": "high monetary value, lower frequency",
+    "Frequent Buyers": "buy often, moderate spend",
+    Average: "average spend & frequency",
+    "At Risk": "lowest engagement, may churn",
   };
 
   if (isLoading) return <LoadingSkeleton />;
@@ -147,9 +153,9 @@ export default function SalesDashboardPage() {
         {/* Month-over-Month Growth */}
         <Card className="card-hover">
           <CardHeader>
-            <CardTitle>⭐ Month-over-Month Growth %</CardTitle>
+            <CardTitle> Month-over-Month Growth %</CardTitle>
             <CardDescription>
-              Revenue change vs previous month — green = growth, red = decline
+              Revenue change vs previous month — green bars = growth, red bars = decline
               <span className="ml-2 text-xs text-muted-foreground">
                 ⌀ run rate: €{monthOverMonth && monthOverMonth.length > 0
                   ? Number(monthOverMonth[monthOverMonth.length - 1]?.monthly_run_rate || 0).toLocaleString()
@@ -158,7 +164,7 @@ export default function SalesDashboardPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <ExpandableChart title="MoM Growth" description="Month-over-month revenue change percentage">
+            <ExpandableChart title="MoM Growth" description="Month-over-month revenue change percentage — green = growth, red = decline">
               <RechartsBarChart
                 labels={monthOverMonth?.map((m: any) => m.month_name?.substring(0, 3) + " " + m.year) || []}
                 datasets={[
@@ -169,6 +175,7 @@ export default function SalesDashboardPage() {
                   },
                 ]}
                 height={320}
+                colorByValue
               />
             </ExpandableChart>
           </CardContent>
@@ -331,26 +338,39 @@ export default function SalesDashboardPage() {
         <Card className="card-hover">
           <CardHeader>
             <CardTitle>Customer Segments (RFM)</CardTitle>
-            <CardDescription>Who are your customers? Recency, Frequency, Monetary breakdown</CardDescription>
+            <CardDescription>
+              <strong>R</strong>ecency · <strong>F</strong>requency · <strong>M</strong>onetary
+              — how recently customers buy, how often, and how much they spend
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="max-h-[320px] overflow-y-auto space-y-2">
-              {customerRfm?.map((s: any, i: number) => (
-                <div key={i} className="flex items-center justify-between rounded-lg border p-3">
-                  <div className="flex items-center gap-3">
-                    <div className={`rounded-full px-3 py-1 text-xs font-medium ${rfmColors[s.segment] || "bg-gray-100 text-gray-700"}`}>
-                      {s.segment}
+            <div className="max-h-[360px] overflow-y-auto space-y-2">
+              {customerRfm?.map((s: any, i: number) => {
+                const seg = s.rfm_segment;
+                const color = rfmColors[seg] || "bg-gray-100 text-gray-700";
+                const desc = rfmExplanations[seg] || "";
+                return (
+                  <div key={i} className="flex items-center justify-between rounded-lg border p-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className={`rounded-full px-3 py-1 text-xs font-medium shrink-0 ${color}`}>
+                        {seg}
+                      </div>
+                      {desc && (
+                        <span className="text-xs text-muted-foreground hidden sm:inline">
+                          {desc}
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-right shrink-0 ml-3">
+                      <span className="font-semibold">{s.customer_count?.toLocaleString()}</span>
+                      <span className="ml-1 text-sm text-muted-foreground">customers</span>
+                      <div className="text-xs text-muted-foreground">
+                        €{Number(s.total_revenue || 0).toLocaleString()}
+                      </div>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <span className="font-semibold">{s.customer_count?.toLocaleString() || s.count}</span>
-                    <span className="ml-1 text-sm text-muted-foreground">customers</span>
-                    <div className="text-xs text-muted-foreground">
-                      €{Number(s.revenue || s.total_revenue || 0).toLocaleString()}
-                    </div>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
               {(!customerRfm || customerRfm.length === 0) && (
                 <p className="text-sm text-muted-foreground">No segment data available</p>
               )}

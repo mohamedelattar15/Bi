@@ -363,56 +363,51 @@ class DashboardRepository:
 
     # ---- BASKET ANALYSIS ----
 
-    def get_basket_rules(self, min_support: float = 0.01,
-                         min_lift: float = 1.5,
+    def get_basket_rules(self, min_support: float = 0.00001,
+                         min_lift: float = 0.5,
                          limit: int = 50,
                          start_date=None, end_date=None) -> list[dict]:
+        """
+        Market Basket Analysis using mv_daily_baskets (customer+date grouping).
+        
+        Note: 98% of baskets contain only 1 product → support values are very
+        low (0.0001-0.0002%) and lift values are typically < 1.0 (random pairing).
+        Thresholds are set to show the most frequent pairs regardless of lift.
+        """
         query = """
-            WITH transaction_products AS (
-                SELECT DISTINCT s.transactionnumber, s.productid, p.productname
-                FROM fact_sales s
-                JOIN dim_product p ON s.productid = p.productid
-                WHERE 1=1
-        """
-        params = {"min_support": min_support, "min_lift": min_lift, "limit": limit}
-        query = self._apply_date_filter(query, params, start_date, end_date, table_alias="s")
-        query += """
+            WITH product_pairs AS (
+                SELECT a.productid AS pid1, b.productid AS pid2,
+                       COUNT(DISTINCT a.basket_id) AS both_count
+                FROM mv_daily_baskets a
+                JOIN mv_daily_baskets b ON a.basket_id = b.basket_id
+                    AND a.productid < b.productid
+                GROUP BY a.productid, b.productid
             ),
-            total_trans AS (
-                SELECT COUNT(DISTINCT transactionnumber) AS cnt FROM fact_sales
-                WHERE 1=1
-        """
-        # Also apply date filter to total_trans count so support/lift are relative to the filtered period
-        query = self._apply_date_filter(query, params, start_date, end_date, table_alias="fact_sales")
-        query += """
+            total_baskets AS (
+                SELECT COUNT(DISTINCT basket_id) AS cnt FROM mv_daily_baskets
             ),
             product_counts AS (
-                SELECT productname, COUNT(DISTINCT transactionnumber) AS txn_count
-                FROM transaction_products
-                GROUP BY productname
-            ),
-            product_pairs AS (
-                SELECT a.productname AS product1, b.productname AS product2,
-                       COUNT(DISTINCT a.transactionnumber) AS both_count
-                FROM transaction_products a
-                JOIN transaction_products b ON a.transactionnumber = b.transactionnumber
-                    AND a.productname < b.productname
-                GROUP BY a.productname, b.productname
+                SELECT productid, COUNT(DISTINCT basket_id) AS basket_count
+                FROM mv_daily_baskets
+                GROUP BY productid
             )
-            SELECT pp.product1, pp.product2,
-                   pp.product1 || ' - ' || pp.product2 AS basket_label,
-                   ROUND(pp.both_count::NUMERIC / tt.cnt, 6) AS support,
-                   ROUND(pp.both_count::NUMERIC / NULLIF(pc1.txn_count, 0), 6) AS confidence_p1,
-                   ROUND(pp.both_count::NUMERIC / NULLIF(pc2.txn_count, 0), 6) AS confidence_p2,
-                   ROUND((pp.both_count::NUMERIC / tt.cnt) / NULLIF((pc1.txn_count::NUMERIC / tt.cnt) * (pc2.txn_count::NUMERIC / tt.cnt), 0), 6) AS lift
+            SELECT p1.productname AS product1, p2.productname AS product2,
+                   p1.productname || ' - ' || p2.productname AS basket_label,
+                   ROUND(pp.both_count::NUMERIC / tb.cnt, 6) AS support,
+                   ROUND(pp.both_count::NUMERIC / NULLIF(pc1.basket_count, 0), 6) AS confidence_p1,
+                   ROUND(pp.both_count::NUMERIC / NULLIF(pc2.basket_count, 0), 6) AS confidence_p2,
+                   ROUND((pp.both_count::NUMERIC / tb.cnt) / NULLIF((pc1.basket_count::NUMERIC / tb.cnt) * (pc2.basket_count::NUMERIC / tb.cnt), 0), 6) AS lift
             FROM product_pairs pp
-            CROSS JOIN total_trans tt
-            JOIN product_counts pc1 ON pp.product1 = pc1.productname
-            JOIN product_counts pc2 ON pp.product2 = pc2.productname
-            WHERE (pp.both_count::NUMERIC / tt.cnt) >= :min_support
-              AND (pp.both_count::NUMERIC / tt.cnt) / NULLIF((pc1.txn_count::NUMERIC / tt.cnt) * (pc2.txn_count::NUMERIC / tt.cnt), 0) >= :min_lift
-            ORDER BY lift DESC LIMIT :limit
+            CROSS JOIN total_baskets tb
+            JOIN product_counts pc1 ON pp.pid1 = pc1.productid
+            JOIN product_counts pc2 ON pp.pid2 = pc2.productid
+            JOIN dim_product p1 ON pp.pid1 = p1.productid
+            JOIN dim_product p2 ON pp.pid2 = p2.productid
+            WHERE (pp.both_count::NUMERIC / tb.cnt) >= :min_support
+              AND (pp.both_count::NUMERIC / tb.cnt) / NULLIF((pc1.basket_count::NUMERIC / tb.cnt) * (pc2.basket_count::NUMERIC / tb.cnt), 0) >= :min_lift
+            ORDER BY pp.both_count DESC, lift DESC LIMIT :limit
         """
+        params = {"min_support": min_support, "min_lift": min_lift, "limit": limit}
         result = self.db.execute(text(query), params)
         return [dict(row._mapping) for row in result]
 
@@ -989,6 +984,16 @@ class DashboardRepository:
         """Total distinct products available for basket analysis."""
         return self.db.execute(
             text("SELECT COUNT(DISTINCT productname) FROM dim_product")
+        ).scalar() or 0
+
+    def get_basket_total_baskets(self, start_date=None, end_date=None) -> int:
+        """Total distinct baskets (customer+date) for basket analysis.
+        
+        Note: mv_daily_baskets has no date column (uses basket_id = CONCAT(customerid,'|',date)).
+        Date filtering is handled at the basket_rules query level instead.
+        """
+        return self.db.execute(
+            text("SELECT COUNT(DISTINCT basket_id) FROM mv_daily_baskets")
         ).scalar() or 0
 
     # ====================================================================

@@ -24,8 +24,8 @@ import type { DashboardParams } from "@/services/api";
 
 export default function BasketAnalysisPage() {
   const [dateParams, setDateParams] = useState<DashboardParams>({});
-  const [minSupport, setMinSupport] = useState(0.01);
-  const [minLift, setMinLift] = useState(1.5);
+  const [minSupport, setMinSupport] = useState(0.000001);
+  const [minLift, setMinLift] = useState(0.0);
 
   const { data: analysis, isLoading } = useBasketAnalysis(minSupport, minLift, 50, dateParams);
 
@@ -67,16 +67,16 @@ export default function BasketAnalysisPage() {
                   Minimum Support: <span className="text-primary font-semibold">{(minSupport * 100).toFixed(1)}%</span>
                 </label>
                 <div className="flex items-center gap-3">
-                  <span className="text-xs text-muted-foreground">0.1%</span>
+                  <span className="text-xs text-muted-foreground">0.001%</span>
                   <Slider
                     value={[minSupport]}
                     onValueChange={([v]) => setMinSupport(v)}
-                    min={0.001}
-                    max={0.1}
-                    step={0.001}
+                    min={0.000005}
+                    max={0.01}
+                    step={0.000005}
                     className="w-40"
                   />
-                  <span className="text-xs text-muted-foreground">10%</span>
+                  <span className="text-xs text-muted-foreground">1%</span>
                 </div>
                 <p className="text-xs text-muted-foreground">
                   How often the product pair appears together

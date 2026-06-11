@@ -6,6 +6,7 @@ from datetime import date
 from typing import Optional
 
 from app.core.database import get_db
+from app.repositories.dashboard_repository import DashboardRepository
 from app.services.customer_service import CustomerService
 from app.schemas.customer import (
     CustomerDetail, CustomerSegment, TopCustomer, CustomerActivity

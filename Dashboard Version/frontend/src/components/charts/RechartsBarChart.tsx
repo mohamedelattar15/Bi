@@ -1,6 +1,6 @@
 "use client"
 
-import { Bar, BarChart as RechartsBar, CartesianGrid, XAxis, YAxis } from "recharts"
+import { Bar, BarChart as RechartsBar, Cell, CartesianGrid, XAxis, YAxis } from "recharts"
 import {
   ChartContainer,
   ChartTooltip,
@@ -19,6 +19,8 @@ interface BarChartProps {
   title?: string
   height?: number
   horizontal?: boolean
+  /** When true, colors each bar green (≥0) or red (<0) based on its value */
+  colorByValue?: boolean
 }
 
 export function RechartsBarChart({
@@ -26,6 +28,7 @@ export function RechartsBarChart({
   datasets,
   height = 300,
   horizontal = false,
+  colorByValue = false,
 }: BarChartProps) {
   const chartData = labels.map((label, i) => {
     const point: Record<string, string | number> = { label }
@@ -48,13 +51,29 @@ export function RechartsBarChart({
     ds.color || `var(--chart-${(i % 5) + 1})`
   )
 
+  /** Tooltip formatter: show % for MoM Growth, currency otherwise */
+  const tooltipFormatter = (value: number, name: string) => {
+    if (name === "MoM Growth %") {
+      const color = value >= 0 ? "#22c55e" : "#ef4444";
+      const sign = value >= 0 ? "+" : "";
+      return <span style={{ color }}>{sign}{value.toFixed(1)}%</span>;
+    }
+    return formatCurrency(value);
+  };
+
   return (
     <ChartContainer config={chartConfig} className="w-full" style={{ height }}>
       <RechartsBar data={chartData} layout={horizontal ? "vertical" : "horizontal"}>
         <CartesianGrid vertical={!horizontal} horizontal={horizontal} strokeDasharray="3 3" />
         {horizontal ? (
           <>
-            <XAxis type="number" tickLine={false} axisLine={false} tickMargin={8} width={60} />
+            <XAxis type="number" tickLine={false} axisLine={false} tickMargin={8} width={60}
+              tickFormatter={(v: number) => {
+                if (v >= 1_000_000_000) return `${(v / 1_000_000_000).toFixed(1)}B`;
+                if (v >= 1_000_000) return `${(v / 1_000_000).toFixed(1)}M`;
+                if (v >= 1_000) return `${(v / 1_000).toFixed(1)}K`;
+                return v.toLocaleString();
+              }} />
             <YAxis
               type="category"
               dataKey="label"
@@ -68,7 +87,14 @@ export function RechartsBarChart({
         ) : (
           <>
             <XAxis dataKey="label" tickLine={false} axisLine={false} tickMargin={8} />
-            <YAxis tickLine={false} axisLine={false} tickMargin={8} width={60} />
+            <YAxis tickLine={false} axisLine={false} tickMargin={8} width={65}
+              tickFormatter={(v: number) => {
+                if (colorByValue) return `${v.toFixed(0)}%`;
+                if (v >= 1_000_000_000) return `${(v / 1_000_000_000).toFixed(1)}B`;
+                if (v >= 1_000_000) return `${(v / 1_000_000).toFixed(1)}M`;
+                if (v >= 1_000) return `${(v / 1_000).toFixed(1)}K`;
+                return v.toLocaleString();
+              }} />
           </>
         )}
         <ChartTooltip
@@ -76,7 +102,7 @@ export function RechartsBarChart({
           content={
             <ChartTooltipContent
               indicator="dot"
-              formatter={(value: number) => formatCurrency(value)}
+              formatter={tooltipFormatter}
             />
           }
         />
@@ -87,7 +113,12 @@ export function RechartsBarChart({
             fill={barColors[i]}
             radius={[4, 4, 0, 0]}
             barSize={24}
-          />
+          >
+            {colorByValue && chartData.map((entry: any, idx: number) => (
+              <Cell key={`cell-${idx}`}
+                fill={entry[ds.label] >= 0 ? "#22c55e" : "#ef4444"} />
+            ))}
+          </Bar>
         ))}
       </RechartsBar>
     </ChartContainer>

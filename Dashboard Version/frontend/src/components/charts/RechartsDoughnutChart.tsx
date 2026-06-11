@@ -4,7 +4,6 @@ import { Pie, PieChart, Cell } from "recharts"
 import {
   ChartContainer,
   ChartTooltip,
-  ChartTooltipContent,
   type ChartConfig,
 } from "@/components/ui/chart"
 import { formatCurrency } from "@/lib/utils"
@@ -36,9 +35,12 @@ export function RechartsDoughnutChart({
   height = 300,
   formatValues = false,
 }: DoughnutChartProps) {
+  const total = values.reduce((s, v) => s + v, 0);
+
   const chartData = labels.map((label, i) => ({
     name: label,
     value: values[i] ?? 0,
+    pct: total > 0 ? ((values[i] ?? 0) / total * 100) : 0,
   }))
 
   const chartConfig: ChartConfig = {}
@@ -49,19 +51,31 @@ export function RechartsDoughnutChart({
     }
   })
 
+  /** Custom tooltip that always shows the segment name */
+  function CustomTooltip({ active, payload }: any) {
+    if (!active || !payload?.length) return null;
+    const entry = payload[0];
+    const name = entry.name;
+    const value = entry.value as number;
+    const pct = entry.payload.pct as number;
+    const formatted = formatValues ? formatCurrency(value) : value.toLocaleString();
+    const color = entry.payload.fill || CHART_COLORS[0];
+    return (
+      <div className="border-border/50 bg-background grid min-w-[8rem] items-start gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs shadow-xl">
+        <div className="font-medium text-foreground">{name}</div>
+        <div className="flex items-center gap-1.5">
+          <span className="h-2 w-2 rounded-full" style={{ background: color }} />
+          <span className="text-muted-foreground">{formatted}</span>
+          <span className="text-muted-foreground">({pct.toFixed(1)}%)</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <ChartContainer config={chartConfig} className="w-full" style={{ height }}>
       <PieChart>
-        <ChartTooltip
-          content={
-            <ChartTooltipContent
-              indicator="dot"
-              formatter={(value: number) =>
-                formatValues ? formatCurrency(value) : value.toLocaleString()
-              }
-            />
-          }
-        />
+        <ChartTooltip content={<CustomTooltip />} />
         <Pie
           data={chartData}
           dataKey="value"
