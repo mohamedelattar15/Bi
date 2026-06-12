@@ -6,15 +6,15 @@ from datetime import date
 from typing import Optional
 
 from app.repositories.dashboard_repository import DashboardRepository
-from app.schemas.basket import BasketRule, BasketAnalysisResult
+from app.schemas.basket import BasketRule, HubProduct, LiftDistribution, ProductMatch, CategoryAffinity, BasketAnalysisResult
 
 
 class BasketService:
     def __init__(self, db: Session):
         self.repo = DashboardRepository(db)
 
-    def get_basket_analysis(self, min_support: float = 0.01,
-                             min_lift: float = 1.5,
+    def get_basket_analysis(self, min_support: float = 0.000001,
+                             min_lift: float = 0.0,
                              limit: int = 50,
                              start_date: Optional[date] = None,
                              end_date: Optional[date] = None) -> BasketAnalysisResult:
@@ -46,6 +46,50 @@ class BasketService:
         total_baskets = self.repo.get_basket_total_baskets(start_date, end_date)
         total_products = self.repo.get_basket_total_products()
 
+        # Hub products
+        hub_data = self.repo.get_basket_hub_products(10)
+        hub_products = [
+            HubProduct(product=row['product'], connection_count=row['connection_count'])
+            for row in hub_data
+        ]
+
+        # Lift distribution
+        lift_dist_data = self.repo.get_basket_lift_distribution()
+        lift_distribution = [
+            LiftDistribution(
+                range_label=row['range_label'],
+                rule_count=row['rule_count'],
+                percentage=Decimal(str(row['percentage'])),
+            )
+            for row in lift_dist_data
+        ]
+
+        # Top matches
+        top_matches_data = self.repo.get_basket_top_matches(5)
+        top_matches = [
+            ProductMatch(
+                hub_product=row['hub_product'],
+                total_connections=row['total_connections'],
+                matched_product=row['matched_product'],
+                lift=Decimal(str(row['lift'])),
+                support=Decimal(str(row['support'])),
+                nb_transactions=row['nb_transactions'],
+            )
+            for row in top_matches_data
+        ]
+
+        # Category affinities
+        cat_data = self.repo.get_basket_category_affinities(15)
+        category_affinities = [
+            CategoryAffinity(
+                category1=row['category1'],
+                category2=row['category2'],
+                pair_count=row['pair_count'],
+                avg_lift=Decimal(str(row['avg_lift'])),
+            )
+            for row in cat_data
+        ]
+
         return BasketAnalysisResult(
             total_transactions=total_baskets,
             total_products=total_products,
@@ -54,4 +98,8 @@ class BasketService:
             rules=rules,
             top_rules_by_lift=top_rules,
             matrix_data=matrix_data,
+            hub_products=hub_products,
+            lift_distribution=lift_distribution,
+            top_matches=top_matches,
+            category_affinities=category_affinities,
         )

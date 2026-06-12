@@ -224,9 +224,10 @@ The project follows a **5-step sequential pipeline**. Each step produces the inp
 ┌──────────────────────────────────────────────────────────────────┐
 │  STEP 4 : Data Mining (Basket Analysis)                          │
 │  ┌──────────────────────────────────────────────────────────┐   │
-│  │  Market Basket Analysis (DAX)                            │   │
-│  │  Support, Confidence, Lift                               │   │
-│  │  Product association rules                                │   │
+│  │  Basket_Analysis.ipynb (Python)                          │   │
+│  │  → 75,020 rules in basket_analysis_results table         │   │
+│  │  → Knowledge Graph · Hub Products · Category Affinities  │   │
+│  │  → Lift Distribution · Product Matching                  │   │
 │  └──────────────────────────────────────────────────────────┘   │
 └──────────────────────────────────────────────────────────────────┘
          │

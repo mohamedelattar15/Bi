@@ -72,6 +72,7 @@ The backend follows a **layered architecture** with clear separation of concerns
 | **Dependency Injection** | Database sessions are injected via FastAPI's `Depends()` |
 | **Caching** | In-memory cache decorator for expensive aggregated queries |
 | **Materialized Views** | Pre-computed aggregations for sub-second dashboard loads |
+| **Pre-Computed Tables** | Offline-computed analytics (basket rules, etc.) stored as regular tables for instant queries |
 | **Optimized Bulk Loading** | Uses PostgreSQL `COPY` for large tables (>100K rows), ~10-50x faster than INSERT |
 | **Pydantic Validation** | Strict input/output schemas with automatic OpenAPI documentation |
 
@@ -272,7 +273,13 @@ Six models representing the **star schema**:
 - `get_price_distribution()` — Price range buckets
 - `get_price_volume_matrix()` — Scatter plot data
 - `get_customer_segments()` — VIP/Regular/Occasional segmentation
-- `get_basket_rules()` — Market basket association rules (support, confidence, lift)
+- **Basket analysis queries (pre-computed)**:
+  - `get_basket_rules()` — Association rules filtered by support/lift from `basket_analysis_results` (75k rules)
+  - `get_basket_hub_products()` — Top 10 products with the most association connections
+  - `get_basket_lift_distribution()` — Histogram of lift values across all rules (7 buckets)
+  - `get_basket_top_matches()` — Best matching products for top hub products
+  - `get_basket_category_affinities()` — Category-to-category affinity pairs with avg lift
+  - `get_basket_total_products()` / `get_basket_total_baskets()` — Pre-computed totals
 - `get_filter_options()` — Dynamic filter values for the frontend
 - `get_revenue_concentration()` / `get_revenue_by_day_of_week()` / etc. — Advanced insights
 
@@ -290,7 +297,7 @@ Five service classes that **orchestrate business logic**:
 | `ProductService` | `product_service.py` | Product detail, product listing with revenue rank, price distribution buckets, price-volume scatter matrix |
 | `CustomerService` | `customer_service.py` | Customer segmentation (VIP/Regular/Occasional), top customers, activity over time |
 | `EmployeeService` | `employee_service.py` | Top employees, performance by age group, performance by seniority |
-| `BasketService` | `basket_service.py` | Market basket analysis: association rules filtered by support/lift, top rules, scatter matrix data |
+| `BasketService` | `basket_service.py` | Market basket analysis: association rules filtered by support/lift, hub products, lift distribution, top matches, category affinities, scatter matrix data |
 
 **Design rationale**:
 - **Thin services**: Each service is a thin layer that calls the repository, transforms raw data into Pydantic schemas, and applies caching.
@@ -323,7 +330,7 @@ Seven schema modules defining **request/response models**:
 | `product.py` | `ProductDetail`, `ProductList`, `PriceDistribution`, `ProductPerformance` |
 | `customer.py` | `CustomerSegments`, `TopCustomer`, `CustomerActivity` |
 | `employee.py` | `TopEmployee`, `EmployeePerformanceByAge`, `EmployeePerformanceBySeniority` |
-| `basket.py` | `BasketAnalysisResult`, `BasketRule` |
+| `basket.py` | `BasketAnalysisResult`, `BasketRule`, `HubProduct`, `LiftDistribution`, `ProductMatch`, `CategoryAffinity` |
 | `analytics.py` | `RevenueConcentration`, `DayOfWeekRevenue`, `MomGrowth`, `RFMSegment`, `GeographicDistribution`, `EmployeeParity` |
 | `filters.py` | `FilterOptions` |
 
@@ -365,13 +372,18 @@ Eight router modules defining **HTTP endpoints**:
 ```python
 @router.get("/analysis", response_model=BasketAnalysisResult)
 def get_basket_analysis(
-    min_support: float = Query(0.01, ge=0.001, le=1.0),
-    min_lift: float = Query(1.5, ge=1.0),
-    limit: int = Query(50, ge=1, le=200),
-    start_date: Optional[date] = Query(None),
-    end_date: Optional[date] = Query(None),
+    min_support: float = Query(0.000001, ge=0.0, le=1.0, description="Minimum support threshold"),
+    min_lift: float = Query(0.0, ge=0.0, description="Minimum lift threshold"),
+    limit: int = Query(50, ge=1, le=200, description="Maximum number of rules"),
+    start_date: Optional[date] = Query(None, description="Filter by start date"),
+    end_date: Optional[date] = Query(None, description="Filter by end date"),
     db: Session = Depends(get_db),
 ):
+    """Get basket (market basket) analysis with association rules.
+    
+    Queries the pre-computed basket_analysis_results table (~75k rules).
+    Due to 98% single-product baskets, lift values are < 1.0 (max ~0.36).
+    """
     service = BasketService(db)
     return service.get_basket_analysis(min_support, min_lift, limit, start_date, end_date)
 ```
@@ -559,6 +571,12 @@ Five pre-computed views for **sub-second dashboard performance**:
 | `mv_employee_performance` | Employee-level with revenue/transaction metrics | Employee dashboard |
 
 These views are refreshed after every ETL run via `refresh_materialized_views()`.
+
+### Pre-Computed Analysis Tables
+
+| Table | Rows | Purpose |
+|-------|------|---------|
+| `basket_analysis_results` | 75,020 | Pre-computed basket association rules (Support, Confidence, Lift) — generated by `Basket_Analysis.ipynb` and loaded via `scripts/load_basket_table.sql` |
 
 ---
 

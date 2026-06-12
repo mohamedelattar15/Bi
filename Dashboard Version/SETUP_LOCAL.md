@@ -96,7 +96,17 @@ CREATE INDEX IF NOT EXISTS idx_mv_db_basket ON mv_daily_baskets(basket_id);
 "
 ```
 
-> 💡 **Tip**: This MV is required for the Basket Analysis page. It groups transactions by `(customerid, date)` since each `transactionnumber` contains only 1 product.
+> 💡 **Tip**: This MV is used for basket preprocessing. The actual basket analysis is now pre-computed in the `basket_analysis_results` table.
+
+### After loading — Load pre-computed basket analysis results
+
+The basket analysis has been pre-computed using `Basket_Analysis.ipynb` and exported to `basket_analysis_results.csv`. Load it into the database:
+
+```bash
+PGPASSWORD=postgres psql -h localhost -U postgres -d grocery_sales -f 'Dashboard Version/backend/scripts/load_basket_table.sql'
+```
+
+This creates the `basket_analysis_results` table with **75,020 association rules** indexed by support and lift for fast queries.
 
 ---
 
@@ -161,4 +171,5 @@ curl http://localhost:8000/api/dashboard/summary
 | Port 8000 already in use | Change port: `--port 8001` |
 | Database connection refused | Ensure PostgreSQL is running: `sudo systemctl start postgresql` |
 | `mv_daily_baskets` not found | Run the CREATE MATERIALIZED VIEW command from step 3 |
+| `basket_analysis_results` not found | Run the load script from step 3b |
 | Frontend shows "Unable to load dashboard" | Ensure the backend is running on port 8000 |

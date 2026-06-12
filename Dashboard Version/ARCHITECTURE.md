@@ -96,6 +96,7 @@ classDiagram
     class BasketService {
         -repo DashboardRepository
         +get_basket_analysis(min_support, min_lift, limit, start_date, end_date) BasketAnalysisResult
+        +includes hub_products, lift_distribution, top_matches, category_affinities
     }
 
     %% ============================
@@ -110,8 +111,13 @@ classDiagram
         +get_price_volume_matrix(start_date, end_date) List~dict~
         +get_customer_segments() List~dict~
         +get_top_customers(limit) List~dict~
-        +get_basket_rules(min_support, min_lift, limit, start_date, end_date) List~dict~
-        +get_basket_total_baskets(start_date, end_date) int
+        +get_basket_rules(min_support, min_lift, limit) List~dict~  ← basket_analysis_results table
+        +get_basket_total_baskets() int
+        +get_basket_total_products() int
+        +get_basket_hub_products(limit) List~dict~
+        +get_basket_lift_distribution() List~dict~
+        +get_basket_top_matches(limit) List~dict~
+        +get_basket_category_affinities(limit) List~dict~
         +get_revenue_concentration() dict
         +get_revenue_by_day_of_week() List~dict~
         +get_month_over_month_growth() List~dict~
@@ -201,6 +207,33 @@ classDiagram
         +rules: List~BasketRule~
         +top_rules_by_lift: List~BasketRule~
         +matrix_data: List~dict~
+        +hub_products: List~HubProduct~
+        +lift_distribution: List~LiftDistribution~
+        +top_matches: List~ProductMatch~
+        +category_affinities: List~CategoryAffinity~
+    }
+    class HubProduct {
+        +product: str
+        +connection_count: int
+    }
+    class LiftDistribution {
+        +range_label: str
+        +rule_count: int
+        +percentage: Decimal
+    }
+    class ProductMatch {
+        +hub_product: str
+        +total_connections: int
+        +matched_product: str
+        +lift: Decimal
+        +support: Decimal
+        +nb_transactions: int
+    }
+    class CategoryAffinity {
+        +category1: str
+        +category2: str
+        +pair_count: int
+        +avg_lift: Decimal
     }
     class RFMSegment {
         +rfm_segment: str

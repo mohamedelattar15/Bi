@@ -364,48 +364,27 @@ class DashboardRepository:
     # ---- BASKET ANALYSIS ----
 
     def get_basket_rules(self, min_support: float = 0.00001,
-                         min_lift: float = 0.5,
+                         min_lift: float = 0.0,
                          limit: int = 50,
                          start_date=None, end_date=None) -> list[dict]:
         """
-        Market Basket Analysis using mv_daily_baskets (customer+date grouping).
+        Basket analysis from the pre-computed basket_analysis_results table.
         
-        Note: 98% of baskets contain only 1 product → support values are very
-        low (0.0001-0.0002%) and lift values are typically < 1.0 (random pairing).
-        Thresholds are set to show the most frequent pairs regardless of lift.
+        The table contains ~75k association rules with pre-calculated
+        Support, Confidence, and Lift values. This query is fast because
+        the data is already computed and indexed.
+        
+        Note: Due to 98% single-product baskets, lift values are < 1.0
+        (max ~0.36). Thresholds should be set low to find meaningful pairs.
         """
         query = """
-            WITH product_pairs AS (
-                SELECT a.productid AS pid1, b.productid AS pid2,
-                       COUNT(DISTINCT a.basket_id) AS both_count
-                FROM mv_daily_baskets a
-                JOIN mv_daily_baskets b ON a.basket_id = b.basket_id
-                    AND a.productid < b.productid
-                GROUP BY a.productid, b.productid
-            ),
-            total_baskets AS (
-                SELECT COUNT(DISTINCT basket_id) AS cnt FROM mv_daily_baskets
-            ),
-            product_counts AS (
-                SELECT productid, COUNT(DISTINCT basket_id) AS basket_count
-                FROM mv_daily_baskets
-                GROUP BY productid
-            )
-            SELECT p1.productname AS product1, p2.productname AS product2,
-                   p1.productname || ' - ' || p2.productname AS basket_label,
-                   ROUND(pp.both_count::NUMERIC / tb.cnt, 6) AS support,
-                   ROUND(pp.both_count::NUMERIC / NULLIF(pc1.basket_count, 0), 6) AS confidence_p1,
-                   ROUND(pp.both_count::NUMERIC / NULLIF(pc2.basket_count, 0), 6) AS confidence_p2,
-                   ROUND((pp.both_count::NUMERIC / tb.cnt) / NULLIF((pc1.basket_count::NUMERIC / tb.cnt) * (pc2.basket_count::NUMERIC / tb.cnt), 0), 6) AS lift
-            FROM product_pairs pp
-            CROSS JOIN total_baskets tb
-            JOIN product_counts pc1 ON pp.pid1 = pc1.productid
-            JOIN product_counts pc2 ON pp.pid2 = pc2.productid
-            JOIN dim_product p1 ON pp.pid1 = p1.productid
-            JOIN dim_product p2 ON pp.pid2 = p2.productid
-            WHERE (pp.both_count::NUMERIC / tb.cnt) >= :min_support
-              AND (pp.both_count::NUMERIC / tb.cnt) / NULLIF((pc1.basket_count::NUMERIC / tb.cnt) * (pc2.basket_count::NUMERIC / tb.cnt), 0) >= :min_lift
-            ORDER BY pp.both_count DESC, lift DESC LIMIT :limit
+            SELECT product1, product2, basket_label,
+                   support, confidence_p1, confidence_p2, lift
+            FROM basket_analysis_results
+            WHERE support >= :min_support
+              AND lift >= :min_lift
+            ORDER BY lift DESC, support DESC
+            LIMIT :limit
         """
         params = {"min_support": min_support, "min_lift": min_lift, "limit": limit}
         result = self.db.execute(text(query), params)
@@ -981,20 +960,118 @@ class DashboardRepository:
     # ====================================================================
 
     def get_basket_total_products(self) -> int:
-        """Total distinct products available for basket analysis."""
+        """Total distinct products in basket analysis (from pre-computed table)."""
         return self.db.execute(
-            text("SELECT COUNT(DISTINCT productname) FROM dim_product")
+            text("""
+                SELECT COUNT(DISTINCT prod) FROM (
+                    SELECT product1 AS prod FROM basket_analysis_results
+                    UNION
+                    SELECT product2 AS prod FROM basket_analysis_results
+                ) p
+            """)
         ).scalar() or 0
 
     def get_basket_total_baskets(self, start_date=None, end_date=None) -> int:
-        """Total distinct baskets (customer+date) for basket analysis.
+        """Total distinct baskets used in the pre-computed analysis.
         
-        Note: mv_daily_baskets has no date column (uses basket_id = CONCAT(customerid,'|',date)).
-        Date filtering is handled at the basket_rules query level instead.
+        Computed from the support formula: support = nb_transactions / total_baskets
+        so total_baskets = nb_transactions / support for any rule.
+        Uses the rule with the most co-occurrences for precision.
         """
         return self.db.execute(
-            text("SELECT COUNT(DISTINCT basket_id) FROM mv_daily_baskets")
+            text("""
+                SELECT ROUND(MAX(nb_transactions::NUMERIC / NULLIF(support, 0))) AS total_baskets
+                FROM basket_analysis_results
+            """)
         ).scalar() or 0
+
+    # ====================================================================
+    # BASKET - Hub products & category affinity
+    # ====================================================================
+
+    def get_basket_hub_products(self, limit: int = 10) -> list[dict]:
+        """Products with the most association connections (hub products)."""
+        query = """
+            SELECT product, COUNT(*) AS connection_count
+            FROM (
+                SELECT product1 AS product FROM basket_analysis_results
+                UNION ALL
+                SELECT product2 AS product FROM basket_analysis_results
+            ) p
+            GROUP BY product
+            ORDER BY connection_count DESC
+            LIMIT :limit
+        """
+        result = self.db.execute(text(query), {"limit": limit})
+        return [dict(row._mapping) for row in result]
+
+    def get_basket_lift_distribution(self) -> list[dict]:
+        """Histogram of lift value distribution across all rules."""
+        query = """
+            SELECT
+              CASE
+                WHEN lift < 0.05 THEN '0.00-0.05'
+                WHEN lift < 0.10 THEN '0.05-0.10'
+                WHEN lift < 0.15 THEN '0.10-0.15'
+                WHEN lift < 0.20 THEN '0.15-0.20'
+                WHEN lift < 0.25 THEN '0.20-0.25'
+                WHEN lift < 0.30 THEN '0.25-0.30'
+                ELSE '0.30+'
+              END AS range_label,
+              COUNT(*) AS rule_count,
+              ROUND(COUNT(*)::NUMERIC / (SELECT COUNT(*) FROM basket_analysis_results) * 100, 1) AS percentage
+            FROM basket_analysis_results
+            GROUP BY 1
+            ORDER BY 1
+        """
+        result = self.db.execute(text(query))
+        return [dict(row._mapping) for row in result]
+
+    def get_basket_top_matches(self, limit: int = 5) -> list[dict]:
+        """For each top hub product, show their best matching products."""
+        query = """
+            WITH top_hubs AS (
+                SELECT product, COUNT(*) AS cnt
+                FROM (
+                    SELECT product1 AS product FROM basket_analysis_results
+                    UNION ALL
+                    SELECT product2 AS product FROM basket_analysis_results
+                ) p
+                GROUP BY product
+                ORDER BY cnt DESC
+                LIMIT :limit
+            )
+            SELECT th.product AS hub_product,
+                   th.cnt AS total_connections,
+                   bar.product2 AS matched_product,
+                   bar.lift,
+                   bar.support,
+                   bar.nb_transactions
+            FROM top_hubs th
+            JOIN basket_analysis_results bar ON th.product = bar.product1
+            ORDER BY th.cnt DESC, bar.lift DESC
+        """
+        result = self.db.execute(text(query), {"limit": limit})
+        return [dict(row._mapping) for row in result]
+
+    def get_basket_category_affinities(self, limit: int = 15) -> list[dict]:
+        """Category-to-category affinities from association rules."""
+        query = """
+            SELECT p1.categoryname AS category1,
+                   p2.categoryname AS category2,
+                   COUNT(*) AS pair_count,
+                   ROUND(AVG(bar.lift)::NUMERIC, 4) AS avg_lift,
+                   ROUND(SUM(bar.nb_transactions)::NUMERIC / NULLIF(SUM(bar.support), 0), 0) AS total_baskets
+            FROM basket_analysis_results bar
+            JOIN dim_product p1 ON bar.product1 = p1.productname
+            JOIN dim_product p2 ON bar.product2 = p2.productname
+            WHERE p1.categoryname <= p2.categoryname
+            GROUP BY p1.categoryname, p2.categoryname
+            ORDER BY pair_count DESC
+            LIMIT :limit
+        """
+        result = self.db.execute(text(query), {"limit": limit})
+        return [dict(row._mapping) for row in result]
 
     # ====================================================================
     # ADVANCED CHARTS - New repository methods

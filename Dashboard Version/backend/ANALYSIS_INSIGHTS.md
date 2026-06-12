@@ -202,37 +202,86 @@ This suggests:
 
 ---
 
-## 6. Basket Service — Basket Analysis (Market Basket)
+## 6. Basket Service — Market Basket Analysis
 
 ### Transaction Characteristics
 
 | Metric | Value |
 |--------|-------|
-| Total transactions | 6,690,599 |
-| Average basket value | **€660.89** |
-| Items per basket (avg) | ~13 units |
+| Total unique baskets (customer × date) | **6,556,433** |
+| Products in scope | **452** |
+| Multi-product baskets | **132,260 (2%)** |
+| Single-product baskets | **6,424,173 (98%)** |
+| Max products per basket | **5** |
+| Avg products per basket | **1.02** |
 
-### Association Rules (from Power BI)
+### Data Limitation
 
-Based on the DAX basket analysis in the Power BI model:
+Each `transactionnumber` in the source dataset contains exactly **1 product**. To perform basket analysis, transactions are grouped by `(customerid, date)` — meaning all products a customer bought on the same day form a "basket". However, **98% of these baskets contain only 1 product**, making meaningful association discovery challenging.
 
-| Metric | Threshold | Meaning |
-|--------|-----------|---------|
-| **Support** | ≥ 1% | Pair appears in at least 67K transactions |
-| **Lift** | ≥ 1.5 | Association is 50% stronger than random |
-| **Confidence** | — | Probability of buying Y given X |
+### Pre-Computed Results (`basket_analysis_results` table)
 
-**Typical rules found** (from Power BI analysis):
-- **"Flour → Sugar"**: Lift ≈ 1.53, Support ≈ 2.3%
-- Baking-related products show strong associations
-- Complementary categories: Beverages + Snacks, Meat + Produce
+The analysis was computed via a Python notebook (matching the Power BI DAX methodology) and stored in a dedicated database table for fast queries:
 
-### Potential Cross-Sell Opportunities
+| Metric | Value |
+|--------|-------|
+| Total association rules | **75,020** |
+| Max Lift | **0.36** (Beef Ground Medium → Broom - Corn) |
+| Max Confidence P1 | **0.08%** |
+| Max Support | **0.0002%** (12 out of 6.55M baskets) |
+| Rules with Lift ≥ 0.3 | **1** |
+| Rules with Lift ≥ 0.2 | **42** |
+| Rules with Lift ≥ 0.15 | **633** |
 
-From the product mix analysis:
-1. **High-price + High-volume combos** (star products): Products priced €50–100 with high sales volume
-2. **Category affinities**: Confections + Beverages, Meat + Produce (meal components)
-3. **Durable + Consumable**: Long-lasting products paired with perishables
+**Interpretation**: All lift values < 1.0 indicate that product co-occurrences are essentially random in this dataset. The dataset is not well-suited for classic market basket analysis due to the single-product transaction design.
+
+### Top 5 Association Rules
+
+| Product 1 | Product 2 | Support | Confidence | Lift |
+|-----------|-----------|---------|------------|------|
+| Beef Ground Medium | Broom - Corn | 0.0002% | 0.08% | **0.360** |
+| Beer - Blue | Lettuce - Spring Mix | 0.0001% | 0.06% | **0.271** |
+| Dc Hikiage Hira Huba | Milk Powder | 0.0001% | 0.05% | **0.243** |
+| Kiwi | Mushroom - Trumpet, Dry | 0.0001% | 0.05% | **0.241** |
+| Beans - Kidney, Canned | Phyllo Dough | 0.0001% | 0.05% | **0.240**
+
+### Hub Products (Most Connected)
+
+These products appear in the most association rules — key cross-selling candidates:
+
+| Product | Connections | Role |
+|---------|-------------|------|
+| Chicken - Wieners | **361** | Most connected product |
+| Truffle Cups - Brown | **358** | High cross-sell potential |
+| Dried Figs | **354** | Frequently paired |
+| Salsify, Organic | **353** | Versatile pairing product |
+| Olives - Stuffed | **351** | Strong hub candidate |
+
+### Category Affinities
+
+Top category pairs by number of co-occurring product pairs:
+
+| Category 1 | Category 2 | Product Pairs | Avg Lift |
+|------------|------------|---------------|----------|
+| Confections | Confections | 1,168 | 0.054 |
+| Confections | Meat | 1,012 | 0.054 |
+| Beverages | Confections | 983 | 0.054 |
+| Confections | Poultry | 946 | 0.054 |
+| Cereals | Confections | 933 | 0.053 |
+
+### Lift Distribution
+
+| Lift Range | Rules | % of Total |
+|------------|-------|------------|
+| 0.00–0.05 | 35,940 | **47.9%** |
+| 0.05–0.10 | 34,367 | **45.8%** |
+| 0.10–0.15 | 4,060 | **5.4%** |
+| 0.15–0.20 | 611 | **0.8%** |
+| 0.20–0.25 | 40 | **0.1%** |
+| 0.25–0.30 | 1 | **<0.1%** |
+| 0.30+ | 1 | **<0.1%** |
+
+> **93.7%** of all association rules have lift < 0.10, confirming very weak associations across the dataset.
 
 ---
 
@@ -256,10 +305,12 @@ From the product mix analysis:
 2. **Category expansion**: Confections leads but only at 12.9% — room to grow any category.
 3. **Employee model**: The uniform performance suggests a scalable sales process. Document and replicate.
 4. **Geographic expansion**: Top customers are 100% USA-based. International growth opportunity.
-5. **Product bundling**: Use association rules for cross-selling in the top 10 products.
+5. **Product bundling**: Focus on hub products (Chicken - Wieners, Truffle Cups - Brown, etc.) with the most association connections for bundling strategies.
+6. **Category cross-selling**: Leverage Confections × Meat and Beverages × Confections affinities for joint promotions.
+7. **Knowledge Graph insights**: Use the product network visualization to identify unexplored cross-sell paths between hub products.
 
 ### Technical Actions
 
 1. **Fix TotalPrice**: Update the ETL to compute `totalprice = quantity × price` during load (not just in queries).
-2. **Basket analysis pre-computation**: Create a materialized view for association rules to speed up the Basket Analysis page.
+2. ~~**Basket analysis pre-computation**: Create a materialized view for association rules to speed up the Basket Analysis page.~~ ✅ **Done** — Results are pre-computed in the `basket_analysis_results` table (75,020 rules, indexed by support and lift).
 3. **Customer segment refresh**: Add recency to the segmentation (RFM model) for more nuanced segments.

@@ -149,7 +149,36 @@
     CREATE INDEX idx_fact_sales_transaction_product ON fact_sales(transactionnumber, productid);
 
     -- ==========================================
-    -- 7. MATERIALIZED VIEWS (Performance Optimization)
+    -- BASKET ANALYSIS RESULTS (Pre-computed)
+    -- Generated from basket_analysis_results.csv
+    -- Contains ~75k association rules with Support, Confidence, and Lift
+    -- ==========================================
+    DROP TABLE IF EXISTS basket_analysis_results CASCADE;
+
+    CREATE TABLE basket_analysis_results (
+        id SERIAL PRIMARY KEY,
+        product1 VARCHAR(200) NOT NULL,
+        product2 VARCHAR(200) NOT NULL,
+        basket_label VARCHAR(500) NOT NULL,
+        support NUMERIC(12,8) NOT NULL,
+        confidence_p1 NUMERIC(12,8) NOT NULL,
+        confidence_p2 NUMERIC(12,8) NOT NULL,
+        lift NUMERIC(8,4) NOT NULL,
+        support_pct NUMERIC(10,4) NOT NULL DEFAULT 0,
+        confidence_p1_pct NUMERIC(10,4) NOT NULL DEFAULT 0,
+        confidence_p2_pct NUMERIC(10,4) NOT NULL DEFAULT 0,
+        nb_transactions INTEGER NOT NULL DEFAULT 0
+    );
+
+    -- Indexes for fast filtering
+    CREATE INDEX idx_bar_support ON basket_analysis_results(support DESC);
+    CREATE INDEX idx_bar_lift ON basket_analysis_results(lift DESC);
+    CREATE INDEX idx_bar_product1 ON basket_analysis_results(product1);
+    CREATE INDEX idx_bar_product2 ON basket_analysis_results(product2);
+    CREATE INDEX idx_bar_label ON basket_analysis_results(basket_label);
+
+    -- ==========================================
+    -- 8. MATERIALIZED VIEWS (Performance Optimization)
     -- ==========================================
 
     -- 7.1 Daily Sales Aggregation

@@ -320,40 +320,43 @@ Sales team performance and demographic analysis.
 
 **Route:** `/basket-analysis` — **File:** `src/app/basket-analysis/page.tsx`
 
-Market basket analysis to discover product associations for cross-selling.
+Market basket analysis with pre-computed association rules (75,020 rules in `basket_analysis_results` table). All data is pre-calculated via `Basket_Analysis.ipynb` matching the Power BI DAX methodology.
+
+> ⚠️ **Dataset limitation**: Each transaction has exactly 1 product → 98% of baskets (grouped by customer+date) contain only 1 item. Lift values are all < 1.0 (max ~0.36).
 
 #### KPIs
 
 | KPI | Description |
 |-----|-------------|
-| **Total Transactions Analyzed** | Total baskets (customer+date groupings) |
+| **Baskets Analyzed** | Total baskets (customer+date groupings) |
 | **Products in Scope** | Distinct products considered |
-| **Association Rules Found** | Rules meeting current thresholds |
-| **Strong Rules (Lift > 2)** | Highly correlated product pairs |
+| **Association Rules** | Rules matching current thresholds |
+| **Top Product by Connections** | Product with most association links + count |
 
 #### Interactive Controls
 
 | Control | Range | Description |
 |---------|-------|-------------|
-| **Minimum Support slider** | 0.001% – 1% | How often a product pair must appear together |
-| **Minimum Lift slider** | 1.0 – 3.0 | How much stronger than random the association must be |
+| **Minimum Support slider** | 0.0005% – 1% | How often a product pair must appear together |
+| **Minimum Lift slider** | 0.0 – 0.4 | How much stronger than random the association must be |
 
-#### Charts & Tables
+#### Visualizations
 
-| Visualization | Type | Insight |
-|---------------|------|---------|
-| Top 10 Product Pairs | Bar (horizontal) | Highest-lift product associations |
-| Association Quality Matrix | Scatter | Support vs Lift — actionable opportunities in top-right quadrant |
-| Association Rules Table | Table | Sortable list of all rules with support, confidence, and lift |
-| Cross-Sell Opportunity | Card | Strongest association with action recommendation |
+| Section | Type | Insight |
+|---------|------|---------|
+| **Category Affinity Overview** | Card | Top cross-category pair with actionable recommendation |
+| **Lift Distribution** | Bar (vertical) | Histogram of lift ranges — data quality assessment |
+| **Top Products by Association Count** | Bar (horizontal) | Hub products with the most connections (cross-selling candidates) |
+| **Knowledge Graph — Product Links** | SVG Network | Force-directed graph: nodes = products (sized by connections), edges = association strength |
+| **Top 10 Product Pairs (by Lift)** | Bar (horizontal) | Highest-lift associations |
+| **Association Rules Table** | Table | All rules with support, confidence, lift, and strength badges |
 
-#### Metrics
+#### Key Features
 
-| Metric | Formula | Interpretation |
-|--------|---------|---------------|
-| **Support** | Pairs(X,Y) / Total Baskets | Frequency of the product pair |
-| **Confidence** | Pairs(X,Y) / Baskets(X) | Probability Y is bought when X is bought |
-| **Lift** | Support(X,Y) / (Support(X)×Support(Y)) | Association strength vs random |
+- **Knowledge Graph**: SVG-based product network showing top 5 hub products and their 2 best matches per hub. Node size = connection count, edge width = lift strength, color grouping by hub.
+- **Lift Distribution**: Understand how the 75k rules are spread — ~48% have lift < 0.05, only ~0.1% exceed 0.20.
+- **Hub Products**: Identify which products are most central to the association network (e.g., Chicken - Wieners has 361 connections).
+- **Category Affinities**: Discover which product categories pair together most often (e.g., Confections × Confections: 1,168 product pairs).
 
 ---
 
@@ -417,6 +420,7 @@ All chart components are thin wrappers around **Recharts**, providing a consiste
 | `RechartsStackedBarChart` | `BarChart` | Stacked bars for composition analysis |
 | `RechartsHeatmapChart` | — | Custom heatmap for category×month revenue |
 | `RechartsWaterfallChart` | `BarChart` | Waterfall chart for profit decomposition |
+| `RechartsLinkChart` | `svg` | **Custom SVG knowledge graph**: force-directed product network with sized nodes and weighted edges |
 | `GaugeCard` | — | Radial gauge for target vs actual metrics |
 
 #### Shared Chart Features

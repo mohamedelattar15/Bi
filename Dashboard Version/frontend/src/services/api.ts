@@ -182,7 +182,7 @@ export const employeesApi = {
 // ==========================================
 
 export const basketApi = {
-  getAnalysis: (minSupport = 0.01, minLift = 1.5, limit = 50, params?: DashboardParams) =>
+  getAnalysis: (minSupport = 0.000001, minLift = 0.0, limit = 50, params?: DashboardParams) =>
     fetchApi<any>(
       `/api/basket/analysis?min_support=${minSupport}&min_lift=${minLift}&limit=${limit}${buildDateParams(params, true)}`
     ),
