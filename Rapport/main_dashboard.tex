@@ -955,7 +955,11 @@ Cette page permet de répondre aux questions suivantes : quels employés contrib
 
 \section{Page analyse du panier}
 
-La page d'analyse du panier est consacrée aux règles d'association entre produits (Market Basket Analysis). Elle exploite les données pré-calculées de l'analyse du panier pour afficher les associations les plus pertinentes.
+La page d'analyse du panier est consacrée aux règles d'association entre produits (Market Basket Analysis). Elle exploite une table pré-calculée \texttt{basket\_analysis\_results} contenant environ 75~020 règles d'association, générée par le script \texttt{generate\_basket\_table.py} à partir du fichier \texttt{groceries\_long.csv}. Cette approche par pré-calcul, alignée sur la méthodologie Power BI DAX, garantit des temps de réponse instantanés sans requête complexe à l'exécution.
+
+\begin{infobox}{Contrainte du jeu de données}
+Chaque transaction contient exactement un seul produit, ce qui implique que 98~\% des paniers (regroupés par client + date) ne contiennent qu'un article. Les valeurs de lift sont donc toutes inférieures à 1,0 (maximum observé~: ~0,36). Les seuils par défaut sont fixés très bas (\texttt{min\_support~=~0,000001}, \texttt{min\_lift~=~0,0}) pour capturer les meilleures associations disponibles.
+\end{infobox}
 
 \begin{figure}[H]
 \centering
@@ -964,15 +968,51 @@ La page d'analyse du panier est consacrée aux règles d'association entre produ
 \label{fig:basket-analysis}
 \end{figure}
 
-\textbf{Métriques globales :} Nombre total de produits analysés, nombre total de transactions, nombre de règles d'association.
+\subsection{Indicateurs clés}
 
-\textbf{Nuage de points (Support vs Lift) :} Chaque point représente une paire de produits. L'axe X représente le lift et l'axe Y le support. Les associations les plus intéressantes se situent dans le quadrant supérieur droit.
+La page affiche quatre métriques de haut niveau~:
 
-\textbf{Produits hubs :} Classement des produits ayant le plus grand nombre de connexions significatives avec d'autres produits.
+\begin{table}[H]
+\centering
+\rowcolors{2}{LightGray}{white}
+\begin{tabularx}{\textwidth}{>{\bfseries}p{4cm}X}
+\toprule
+\rowcolor{TableHeader}
+\color{white}KPI & \color{white}Description \\
+\midrule
+Paniers analysés & Nombre total de paniers (regroupement client + date). \\
+Produits analysés & Nombre de produits distincts présents dans les règles. \\
+Règles d'association & Nombre de règles correspondant aux seuils courants. \\
+Produit avec le plus de connexions & Produit central du réseau d'associations avec son nombre de connexions. \\
+\bottomrule
+\end{tabularx}
+\caption{Indicateurs clés de la page analyse du panier}
+\end{table}
 
-\textbf{Distribution du lift :} Histogramme montrant la répartition des valeurs de lift sur l'ensemble des règles.
+\subsection{Contrôles interactifs}
 
-\textbf{Affinités par catégorie :} Tableau des associations entre catégories de produits, avec le lift moyen et le nombre de paires.
+Deux curseurs permettent d'ajuster la sensibilité de l'analyse~:
+
+\begin{itemize}
+  \item \textbf{Support minimum} (0,0005~\% à 1~\%)~: seuil de fréquence d'apparition d'une paire.
+  \item \textbf{Lift minimum} (0,0 à 0,4)~: seuil de force de l'association.
+\end{itemize}
+
+\subsection{Visualisations}
+
+\begin{itemize}
+  \item \textbf{Distribution du lift}~: Histogramme montrant la répartition des 75~020 règles par tranche de lift. Environ 48~\% des règles ont un lift inférieur à 0,05, et seulement 0,1~\% dépassent 0,20. Ce graphique sert d'indicateur de qualité des données.
+  
+  \item \textbf{Produits hubs}~: Diagramme en barres horizontal classant les produits ayant le plus grand nombre de connexions avec d'autres produits. Le produit le plus connecté (ex. \textit{Chicken -- Wieners}) peut atteindre jusqu'à 361 connexions. Ces produits sont les meilleurs candidats pour des actions de vente croisée.
+  
+  \item \textbf{Graphe de connaissances -- Liens produits}~: Un réseau SVG interactif où chaque nœud représente un produit (taille proportionnelle au nombre de connexions), et chaque arête représente une association (épaisseur proportionnelle au lift). Les cinq produits hubs principaux sont disposés en cercle, reliés à leurs meilleurs associés. La couleur distingue les groupes de hubs.
+  
+  \item \textbf{Top 10 paires de produits (par lift)}~: Diagramme en barres horizontal présentant les dix associations dont le lift est le plus élevé, permettant d'identifier rapidement les paires les plus notables.
+  
+  \item \textbf{Affinités par catégorie}~: Tableau des associations entre catégories de produits (ex. \textit{Confections × Confections~:~1~168 paires}), avec le lift moyen et le nombre de paires.
+  
+  \item \textbf{Tableau des règles d'association}~: Tableau complet listant toutes les paires avec les métriques de support, confiance (dans les deux directions) et lift. Chaque règle est accompagnée d'un badge de force (\textit{faible}, \textit{moyenne}, \textit{forte}) selon la valeur du lift.
+\end{itemize}
 
 \section{Synthèse des apports des tableaux de bord}
 
