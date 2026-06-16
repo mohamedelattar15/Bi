@@ -183,7 +183,7 @@
   \noindent
   \begin{minipage}[c]{0.30\linewidth}
     \raggedright
-    \includegraphics[width=2.25cm]{images/logo_uae.png}
+    \includegraphics[width=3.25cm]{images/logo_uae.png}
   \end{minipage}
   \hfill
   \begin{minipage}[c]{0.38\linewidth}
@@ -194,7 +194,7 @@
   \hfill
   \begin{minipage}[c]{0.30\linewidth}
     \raggedleft
-    \includegraphics[width=2.25cm]{images/fstlogo.png}
+    \includegraphics[width=3.25cm]{images/logo_fstt.png}
   \end{minipage}
 
   \vspace{0.45cm}
@@ -262,11 +262,11 @@
     \begin{minipage}[t]{0.48\linewidth}
       \raggedleft
       \textbf{\textcolor{PrimaryRed}{Réalisé par :}}\\[0.15cm]
-      \textit{Amami Yousra}\\
+     \textit{EL Gharib Mahmoud}\\
+      \textit{EL Attar Mohamed}\\
       \textit{Hamdan Kaouthar}\\
       \textit{Zarqi Ezzoubair}\\
-      \textit{EL gharib Mahmoud}\\
-      \textit{EL Attar Mohamed}
+       \textit{Amami Yousra}
     \end{minipage}
   \end{tcolorbox}
 
@@ -370,7 +370,7 @@ La démarche suivie est progressive. Elle commence par l'étude des sources de d
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.76\textwidth,height=0.66\textheight,keepaspectratio]{images/shema.png}
+\includegraphics[width=0.76\textwidth,height=0.66\textheight,keepaspectratio]{images/demarche_de_projet.png}
 \caption{Démarche générale du projet}
 \label{fig:demarche}
 \end{figure}
@@ -379,7 +379,7 @@ La démarche suivie est progressive. Elle commence par l'étude des sources de d
 
 \section{Source du jeu de données}
 
-Le projet s'appuie sur le jeu de données \textit{Grocery Sales Database}, publié sur Kaggle par l'utilisateur \textit{andrexibiza} \cite{andrexibiza2024grocery}.
+Le projet s'appuie sur le jeu de données \textit{Grocery Sales Database}, publié sur Kaggle par l'utilisateur \cite{andrexibiza}.
 
 Ce jeu de données simule l'activité commerciale d'une enseigne de distribution alimentaire. Il contient des informations relationnelles liées aux ventes, aux produits, aux catégories, aux clients, aux employés, aux villes et aux pays. Cette structure est particulièrement intéressante pour un projet décisionnel, car elle permet de construire des analyses selon plusieurs axes métier : temps, produit, client, employé et zone géographique.
 
@@ -526,8 +526,8 @@ L'architecture se décompose en trois couches principales :
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth,height=8cm,keepaspectratio]{images/class_diagram.png}
-\caption{Diagramme de classes de l'architecture du backend}
+\includegraphics[width=\textwidth,height=14cm,keepaspectratio]{images/diagaram_de architecture .png}
+\caption{architecture logicielle simplifiée}
 \label{fig:class-diagram}
 \end{figure}
 
@@ -535,8 +535,8 @@ L'élément central de cette architecture est le pipeline ETL (Extract, Transfor
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth,height=10cm,keepaspectratio]{images/etl_pipeline.png}
-\caption{Pipeline ETL Python utilisé pour charger le schéma décisionnel}
+\includegraphics[width=\textwidth,height=20cm,keepaspectratio]{images/etl_diagram_detailled.png}
+\caption{ETL Pipeline Diagram détaillé}
 \label{fig:etl-pipeline}
 \end{figure}
 
@@ -583,7 +583,7 @@ Les dimensions apportent le contexte métier indispensable à l'analyse des vent
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth,height=8cm,keepaspectratio]{images/data_model.png}
+\includegraphics[width=\textwidth,height=10cm,keepaspectratio]{images/data_model.png}
 \caption{Le schéma en étoile -- Diagramme entité-relation}
 \label{fig:data-model}
 \end{figure}
@@ -718,7 +718,7 @@ L'API est construite avec \textbf{FastAPI}, un framework Python moderne pour la 
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth,height=8cm,keepaspectratio]{images/sequence_diagram.png}
+\includegraphics[width=\textwidth,height=18cm,keepaspectratio]{images/Sequence Diagram.png}
 \caption{Diagramme de séquence -- Chargement d'une page du tableau de bord}
 \label{fig:sequence-diagram}
 \end{figure}
@@ -758,37 +758,88 @@ Validation Pydantic & Schémas stricts avec documentation automatique. \\
 
 L'API expose les endpoints suivants :
 
-\begin{longtable}{>{\ttfamily}p{4.5cm}>{\bfseries}p{1.5cm}p{6.5cm}}
+\begin{longtable}{>{\ttfamily}p{5cm}cp{7cm}}
 \caption{Principaux endpoints de l'API REST}
-\label{tab:api-endpoints}
-\endfirsthead
+\label{tab:api-endpoints}\\
+
 \toprule
 \rowcolor{TableHeader}
-\color{white}Endpoint & \color{white}Méthode & \color{white}Description \\
+\color{white}\textbf{Endpoint} &
+\color{white}\textbf{Méthode} &
+\color{white}\textbf{Description} \\
+\midrule
+\endfirsthead
+
+\multicolumn{3}{c}%
+{{\tablename\ \thetable{} -- Suite}}\\
+\toprule
+\rowcolor{TableHeader}
+\color{white}\textbf{Endpoint} &
+\color{white}\textbf{Méthode} &
+\color{white}\textbf{Description} \\
 \midrule
 \endhead
+
 \bottomrule
 \endfoot
-\toprule
-\rowcolor{TableHeader}
-\color{white}Endpoint & \color{white}Méthode & \color{white}Description \\
-\midrule
-/api/dashboard/summary & GET & KPIs principaux (CA, quantités, transactions, panier moyen). \\
-/api/sales/over-time & GET & Évolution mensuelle du chiffre d'affaires. \\
-/api/sales/by-category & GET & Répartition du CA par catégorie. \\
-/api/sales/by-city & GET & Distribution géographique des ventes. \\
-/api/products/all & GET & Liste des produits avec performances. \\
-/api/products/price-distribution & GET & Distribution des prix. \\
-/api/products/price-volume-matrix & GET & Matrice prix-volume. \\
-/api/customers/segments & GET & Segments client (VIP, Régulier, etc.). \\
-/api/customers/top & GET & Meilleurs clients. \\
-/api/employees/top & GET & Classement des employés. \\
-/api/employees/performance-by-age & GET & Performance par tranche d'âge. \\
-/api/basket/analysis & GET & Analyse du panier (règles d'association). \\
-/api/insights/revenue-concentration & GET & Concentration du chiffre d'affaires. \\
-/api/insights/month-over-month & GET & Croissance mensuelle. \\
-/api/insights/customer-rfm & GET & Segmentation RFM. \\
-/api/filters/ & GET & Options de filtrage (dates, catégories, etc.). \\
+
+\bottomrule
+\endlastfoot
+
+/api/dashboard/summary & GET &
+KPIs principaux (chiffre d'affaires, quantités vendues, nombre de transactions et panier moyen). \\
+
+/api/sales/over-time & GET &
+Évolution temporelle du chiffre d'affaires. \\
+
+/api/sales/by-category & GET &
+Répartition des ventes par catégorie de produits. \\
+
+/api/sales/by-city & GET &
+Distribution géographique des ventes par ville. \\
+
+/api/products/all & GET &
+Liste complète des produits avec indicateurs de performance. \\
+
+/api/products/price-
+distribution & GET &
+Analyse de la distribution des prix. \\
+
+/api/products/price-
+volume-matrix & GET &
+Matrice d'analyse prix-volume des produits. \\
+
+/api/customers/segments & GET &
+Segmentation des clients (VIP, Régulier, Occasionnel, etc.). \\
+
+/api/customers/top & GET &
+Classement des meilleurs clients selon le chiffre d'affaires généré. \\
+
+/api/employees/top & GET &
+Classement des employés les plus performants. \\
+
+/api/employees/perform-
+ance-by-age & GET &
+Analyse de la performance selon les tranches d'âge. \\
+
+/api/basket/analysis & GET &
+Résultats de l'analyse du panier d'achat et règles d'association. \\
+
+/api/insights/revenue-
+concentration & GET &
+Mesure de la concentration du chiffre d'affaires. \\
+
+/api/insights/month-
+over-month & GET &
+Croissance mensuelle du chiffre d'affaires. \\
+
+/api/insights/customer-
+rfm & GET &
+Segmentation client basée sur le modèle RFM. \\
+
+/api/filters & GET &
+Options de filtrage disponibles (dates, catégories, villes, etc.). \\
+
 \end{longtable}
 
 \begin{quotation}
@@ -845,7 +896,7 @@ La page des ventes constitue la vue principale du tableau de bord. Elle fournit 
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth,height=8cm,keepaspectratio]{images/sale_performance.png}
+\includegraphics[width=\textwidth,height=20cm,keepaspectratio]{images/sale_performance.png}
 \caption{Tableau de bord d'analyse des ventes -- Page d'accueil}
 \label{fig:sales-performance}
 \end{figure}
@@ -894,7 +945,7 @@ La page produits est consacrée à l'analyse de la performance des références 
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth,height=8cm,keepaspectratio]{images/product_performance.png}
+\includegraphics[width=\textwidth,height=12cm,keepaspectratio]{images/product_performance.png}
 \caption{Tableau de bord d'analyse des produits}
 \label{fig:product-performance}
 \end{figure}
@@ -917,7 +968,7 @@ La page clients a pour objectif d'analyser la valeur et le comportement de la cl
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth,height=8cm,keepaspectratio]{images/customer_performance.png}
+\includegraphics[width=\textwidth,height=12cm,keepaspectratio]{images/customer_performance.png}
 \caption{Tableau de bord d'analyse des clients}
 \label{fig:customer-performance}
 \end{figure}
@@ -938,7 +989,7 @@ La page employés permet d'évaluer la contribution des vendeurs à la performan
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth,height=8cm,keepaspectratio]{images/employee_performance.png}
+\includegraphics[width=\textwidth,height=12cm,keepaspectratio]{images/employee_performance.png}
 \caption{Tableau de bord d'analyse des employés}
 \label{fig:employee-performance}
 \end{figure}
@@ -963,7 +1014,7 @@ Chaque transaction contient exactement un seul produit, ce qui implique que 98~\
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth,height=8cm,keepaspectratio]{images/basket_analysis.png}
+\includegraphics[width=\textwidth,height=12cm,keepaspectratio]{images/basket_analysis.png}
 \caption{Tableau de bord d'analyse du panier}
 \label{fig:basket-analysis}
 \end{figure}
