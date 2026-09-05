@@ -285,7 +285,7 @@ classDiagram
 
 ---
 
-## 2.   
+## 2. Sequence Diagram
 
 The sequence diagram below shows the **interaction flow** when a user loads the Sales Dashboard page. It illustrates how a single page load triggers multiple parallel API requests, each flowing through the layered architecture.
 
@@ -365,7 +365,7 @@ sequenceDiagram
 
 ---
 
-## 3. ETL Pipeline Diagram détaillé
+## 3. ETL Pipeline Diagram
 
 The ETL (Extract, Transform, Load) pipeline processes raw CSV files into the PostgreSQL star schema. The pipeline is implemented in Python with pandas and SQLAlchemy.
 
